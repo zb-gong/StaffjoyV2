@@ -1,0 +1,2 @@
+{"env":"development","level":"debug","msg":"Booting emailserver environment development","service":"emailapi","time":"2022-04-04T23:40:42-04:00"}
+{"env":"development","level":"debug","msg":"Booting emailserver health check development","service":"emailapi","time":"2022-04-04T23:40:42-04:00"}

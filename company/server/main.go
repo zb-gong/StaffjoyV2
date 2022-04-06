@@ -71,7 +71,9 @@ func main() {
 		s.errorClient = environments.ErrorClient(&config)
 	}
 
-	s.db, err = sql.Open("mysql", os.Getenv("MYSQL_CONFIG")+"?parseTime=true")
+	// s.db, err = sql.Open("mysql", os.Getenv("MYSQL_CONFIG")+"?parseTime=true")
+	s.db, err = sql.Open("mysql", "staffjoy:password@tcp(127.0.0.1:3306)/staffjoy?parseTime=true")
+	// s.db.SetMaxIdleConns(1000)
 	if err != nil {
 		logger.Panicf("Cannot connect to company db - %v", err)
 	}
@@ -102,8 +104,9 @@ func main() {
 	go func() {
 		logger.Debugf("Booting companyserver health check %s", config.Name)
 		http.HandleFunc(healthcheck.HEALTHPATH, healthcheck.Handler)
-		http.ListenAndServe(":80", nil)
+		http.ListenAndServe(":6789", nil)
 	}()
 
+	s.logger.Infof("Starting to listen company service")
 	grpcServer.Serve(lis)
 }

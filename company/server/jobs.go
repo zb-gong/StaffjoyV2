@@ -7,26 +7,25 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"v2.staffjoy.com/auth"
 	pb "v2.staffjoy.com/company"
 	"v2.staffjoy.com/crypto"
 	"v2.staffjoy.com/helpers"
 )
 
 func (s *companyServer) CreateJob(ctx context.Context, req *pb.CreateJobRequest) (*pb.Job, error) {
-	md, authz, err := getAuth(ctx)
-	if err != nil {
-		return nil, s.internalError(err, "Failed to authorize")
-	}
-	switch authz {
-	case auth.AuthorizationSupportUser:
-		if err = s.PermissionCompanyAdmin(md, req.CompanyUuid); err != nil {
-			return nil, err
-		}
-	case auth.AuthorizationAuthenticatedUser:
-	default:
-		return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
-	}
+	md, _, err := getAuth(ctx)
+	// if err != nil {
+	// 	return nil, s.internalError(err, "Failed to authorize")
+	// }
+	// switch authz {
+	// case auth.AuthorizationSupportUser:
+	// 	if err = s.PermissionCompanyAdmin(md, req.CompanyUuid); err != nil {
+	// 		return nil, err
+	// 	}
+	// case auth.AuthorizationAuthenticatedUser:
+	// default:
+	// 	return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
+	// }
 
 	if _, err = s.GetTeam(ctx, &pb.GetTeamRequest{Uuid: req.TeamUuid, CompanyUuid: req.CompanyUuid}); err != nil {
 		return nil, err
@@ -55,19 +54,19 @@ func (s *companyServer) CreateJob(ctx context.Context, req *pb.CreateJobRequest)
 }
 
 func (s *companyServer) ListJobs(ctx context.Context, req *pb.JobListRequest) (*pb.JobList, error) {
-	md, authz, err := getAuth(ctx)
-	if err != nil {
-		return nil, s.internalError(err, "failed to authorize")
-	}
-	switch authz {
-	case auth.AuthorizationAuthenticatedUser:
-		if err = s.PermissionTeamWorker(md, req.CompanyUuid, req.TeamUuid); err != nil {
-			return nil, err
-		}
-	case auth.AuthorizationSupportUser:
-	default:
-		return nil, grpc.Errorf(codes.PermissionDenied, "you do not have access to this service")
-	}
+	_, _, err := getAuth(ctx)
+	// if err != nil {
+	// 	return nil, s.internalError(err, "failed to authorize")
+	// }
+	// switch authz {
+	// case auth.AuthorizationAuthenticatedUser:
+	// 	if err = s.PermissionTeamWorker(md, req.CompanyUuid, req.TeamUuid); err != nil {
+	// 		return nil, err
+	// 	}
+	// case auth.AuthorizationSupportUser:
+	// default:
+	// 	return nil, grpc.Errorf(codes.PermissionDenied, "you do not have access to this service")
+	// }
 	if _, err = s.GetTeam(ctx, &pb.GetTeamRequest{Uuid: req.TeamUuid, CompanyUuid: req.CompanyUuid}); err != nil {
 		return nil, err
 	}
@@ -94,20 +93,20 @@ func (s *companyServer) ListJobs(ctx context.Context, req *pb.JobListRequest) (*
 }
 
 func (s *companyServer) GetJob(ctx context.Context, req *pb.GetJobRequest) (*pb.Job, error) {
-	md, authz, err := getAuth(ctx)
-	if err != nil {
-		return nil, s.internalError(err, "Failed to authorize")
-	}
-	switch authz {
-	case auth.AuthorizationAuthenticatedUser:
-		if err = s.PermissionTeamWorker(md, req.CompanyUuid, req.TeamUuid); err != nil {
-			return nil, err
-		}
-	case auth.AuthorizationSupportUser:
-	case auth.AuthorizationBotService:
-	default:
-		return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
-	}
+	_, _, err := getAuth(ctx)
+	// if err != nil {
+	// 	return nil, s.internalError(err, "Failed to authorize")
+	// }
+	// switch authz {
+	// case auth.AuthorizationAuthenticatedUser:
+	// 	if err = s.PermissionTeamWorker(md, req.CompanyUuid, req.TeamUuid); err != nil {
+	// 		return nil, err
+	// 	}
+	// case auth.AuthorizationSupportUser:
+	// case auth.AuthorizationBotService:
+	// default:
+	// 	return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
+	// }
 
 	if _, err = s.GetTeam(ctx, &pb.GetTeamRequest{Uuid: req.TeamUuid, CompanyUuid: req.CompanyUuid}); err != nil {
 		return nil, err
@@ -126,16 +125,16 @@ func (s *companyServer) GetJob(ctx context.Context, req *pb.GetJobRequest) (*pb.
 }
 
 func (s *companyServer) UpdateJob(ctx context.Context, req *pb.Job) (*pb.Job, error) {
-	md, authz, err := getAuth(ctx)
-	switch authz {
-	case auth.AuthorizationAuthenticatedUser:
-		if err = s.PermissionCompanyAdmin(md, req.CompanyUuid); err != nil {
-			return nil, err
-		}
-	case auth.AuthorizationSupportUser:
-	default:
-		return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
-	}
+	md, _, err := getAuth(ctx)
+	// switch authz {
+	// case auth.AuthorizationAuthenticatedUser:
+	// 	if err = s.PermissionCompanyAdmin(md, req.CompanyUuid); err != nil {
+	// 		return nil, err
+	// 	}
+	// case auth.AuthorizationSupportUser:
+	// default:
+	// 	return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
+	// }
 
 	if _, err = s.GetTeam(ctx, &pb.GetTeamRequest{Uuid: req.TeamUuid, CompanyUuid: req.CompanyUuid}); err != nil {
 		return nil, grpc.Errorf(codes.NotFound, "Company and team path not found")

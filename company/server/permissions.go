@@ -12,19 +12,19 @@ import (
 
 // PermissionCompanyAdmin checks that the current user is an admin of the given company
 func (s *companyServer) PermissionCompanyAdmin(md metadata.MD, companyUUID string) error {
-	userUUID, err := auth.GetCurrentUserUUIDFromMetadata(md)
-	if err != nil {
-		return s.internalError(err, "failed to find current user uuid")
+	// userUUID, err := auth.GetCurrentUserUUIDFromMetadata(md)
+	// if err != nil {
+	// 	return s.internalError(err, "failed to find current user uuid")
 
-	}
+	// }
 
-	ok, err := s.checkCompanyAdmin(userUUID, companyUUID)
-	if err != nil {
-		return s.internalError(err, "failed to check company admin permissions")
-	}
-	if !ok {
-		return grpc.Errorf(codes.PermissionDenied, "you do not have admin access to this service")
-	}
+	// ok, err := s.checkCompanyAdmin(userUUID, companyUUID)
+	// if err != nil {
+	// 	return s.internalError(err, "failed to check company admin permissions")
+	// }
+	// if !ok {
+	// 	return grpc.Errorf(codes.PermissionDenied, "you do not have admin access to this service")
+	// }
 	return nil
 }
 

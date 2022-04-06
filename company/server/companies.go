@@ -7,23 +7,22 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
-	"v2.staffjoy.com/auth"
 	pb "v2.staffjoy.com/company"
 	"v2.staffjoy.com/crypto"
 	"v2.staffjoy.com/helpers"
 )
 
 func (s *companyServer) CreateCompany(ctx context.Context, req *pb.CreateCompanyRequest) (*pb.Company, error) {
-	md, authz, err := getAuth(ctx)
-	if err != nil {
-		return nil, s.internalError(err, "failed to authorize")
-	}
-	switch authz {
-	case auth.AuthorizationSupportUser:
-	case auth.AuthorizationWWWService:
-	default:
-		return nil, grpc.Errorf(codes.PermissionDenied, "you do not have access to this service")
-	}
+	md, _, err := getAuth(ctx)
+	// if err != nil {
+	// 	return nil, s.internalError(err, "failed to authorize")
+	// }
+	// switch authz {
+	// case auth.AuthorizationSupportUser:
+	// case auth.AuthorizationWWWService:
+	// default:
+	// 	return nil, grpc.Errorf(codes.PermissionDenied, "you do not have access to this service")
+	// }
 
 	// sanitization
 	req.DefaultDayWeekStarts, err = sanitizeDayOfWeek(req.DefaultDayWeekStarts)
@@ -55,15 +54,15 @@ func (s *companyServer) CreateCompany(ctx context.Context, req *pb.CreateCompany
 }
 
 func (s *companyServer) ListCompanies(ctx context.Context, req *pb.CompanyListRequest) (*pb.CompanyList, error) {
-	_, authz, err := getAuth(ctx)
-	if err != nil {
-		return nil, s.internalError(err, "Failed to authorize")
-	}
-	switch authz {
-	case auth.AuthorizationSupportUser:
-	default:
-		return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
-	}
+	_, _, err := getAuth(ctx)
+	// if err != nil {
+	// 	return nil, s.internalError(err, "Failed to authorize")
+	// }
+	// switch authz {
+	// case auth.AuthorizationSupportUser:
+	// default:
+	// 	return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
+	// }
 
 	if req.Limit <= 0 {
 		req.Limit = 20
@@ -92,25 +91,25 @@ func (s *companyServer) ListCompanies(ctx context.Context, req *pb.CompanyListRe
 }
 
 func (s *companyServer) GetCompany(ctx context.Context, req *pb.GetCompanyRequest) (*pb.Company, error) {
-	md, authz, err := getAuth(ctx)
-	if err != nil {
-		return nil, s.internalError(err, "Failed to authorize")
-	}
+	_, _, err := getAuth(ctx)
+	// if err != nil {
+	// 	return nil, s.internalError(err, "Failed to authorize")
+	// }
 
-	switch authz {
-	case auth.AuthorizationAccountService:
-	case auth.AuthorizationBotService:
-	case auth.AuthorizationWhoamiService:
-	case auth.AuthorizationAuthenticatedUser:
-		if err = s.PermissionCompanyDirectory(md, req.Uuid); err != nil {
-			return nil, err
-		}
-	case auth.AuthorizationSupportUser:
-	case auth.AuthorizationWWWService:
-	case auth.AuthorizationICalService:
-	default:
-		return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
-	}
+	// switch authz {
+	// case auth.AuthorizationAccountService:
+	// case auth.AuthorizationBotService:
+	// case auth.AuthorizationWhoamiService:
+	// case auth.AuthorizationAuthenticatedUser:
+	// 	if err = s.PermissionCompanyDirectory(md, req.Uuid); err != nil {
+	// 		return nil, err
+	// 	}
+	// case auth.AuthorizationSupportUser:
+	// case auth.AuthorizationWWWService:
+	// case auth.AuthorizationICalService:
+	// default:
+	// 	return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
+	// }
 
 	obj, err := s.dbMap.Get(pb.Company{}, req.Uuid)
 	if err != nil {
@@ -122,16 +121,16 @@ func (s *companyServer) GetCompany(ctx context.Context, req *pb.GetCompanyReques
 }
 
 func (s *companyServer) UpdateCompany(ctx context.Context, req *pb.Company) (*pb.Company, error) {
-	md, authz, err := getAuth(ctx)
-	switch authz {
-	case auth.AuthorizationAuthenticatedUser:
-		if err = s.PermissionCompanyAdmin(md, req.Uuid); err != nil {
-			return nil, err
-		}
-	case auth.AuthorizationSupportUser:
-	default:
-		return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
-	}
+	md, _, err := getAuth(ctx)
+	// switch authz {
+	// case auth.AuthorizationAuthenticatedUser:
+	// 	if err = s.PermissionCompanyAdmin(md, req.Uuid); err != nil {
+	// 		return nil, err
+	// 	}
+	// case auth.AuthorizationSupportUser:
+	// default:
+	// 	return nil, grpc.Errorf(codes.PermissionDenied, "You do not have access to this service")
+	// }
 
 	// sanitization
 	if req.DefaultDayWeekStarts, err = sanitizeDayOfWeek(req.DefaultDayWeekStarts); err != nil {

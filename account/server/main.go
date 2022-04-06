@@ -57,7 +57,8 @@ func main() {
 	defer smsConn.Close()
 	s.smsClient = sms.NewSmsServiceClient(smsConn)
 
-	s.db, err = sql.Open("mysql", os.Getenv("MYSQL_CONFIG")+"?parseTime=true")
+	// s.db, err = sql.Open("mysql", os.Getenv("MYSQL_CONFIG")+"?parseTime=true")
+	s.db, err = sql.Open("mysql", "staffjoy:password@tcp(127.0.0.1:3306)/staffjoy?parseTime=true")
 	if err != nil {
 		logger.Panicf("Cannot connect to account db - %v", err)
 	}
