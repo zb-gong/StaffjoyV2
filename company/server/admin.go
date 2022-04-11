@@ -10,6 +10,15 @@ import (
 )
 
 func (s *companyServer) ListAdmins(ctx context.Context, req *pb.AdminListRequest) (*pb.Admins, error) {
+	if s.use_caching {
+		res, ok := s.admins_cache[req.CompanyUuid]
+		if ok {
+			s.logger.Info("list admins cache hit")
+			return res, nil
+		} else {
+			s.logger.Info("list admins cache miss")
+		}
+	}
 	_, _, err := getAuth(ctx)
 	// if err != nil {
 	// 	return nil, s.internalError(err, "Failed to authorize")
@@ -46,6 +55,12 @@ func (s *companyServer) ListAdmins(ctx context.Context, req *pb.AdminListRequest
 			return nil, err
 		}
 		res.Admins = append(res.Admins, *e)
+	}
+
+	if s.use_caching {
+		s.admins_lock.Lock()
+		s.admins_cache[req.CompanyUuid] = res
+		s.admins_lock.Unlock()
 	}
 	return res, nil
 }
@@ -109,6 +124,14 @@ func (s *companyServer) DeleteAdmin(ctx context.Context, req *pb.DirectoryEntryR
 	al := newAuditEntry(md, "admin", req.UserUuid, req.CompanyUuid, "")
 	al.Log(logger, "removed admin")
 	go helpers.TrackEventFromMetadata(md, "admin_deleted")
+
+	if s.use_caching {
+		s.admins_lock.Lock()
+		if _, ok := s.admins_cache[req.CompanyUuid]; ok {
+			delete(s.admins_cache, req.CompanyUuid)
+		}
+		s.admins_lock.Unlock()
+	}
 	return &empty.Empty{}, nil
 }
 

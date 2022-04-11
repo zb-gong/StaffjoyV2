@@ -81,11 +81,27 @@ func (s *companyServer) ListCompanies(ctx context.Context, req *pb.CompanyListRe
 		}
 
 		// TODO - can we parallelize this, and maybe be hitting redis?
+		if s.use_caching {
+			cached_c, ok := s.company_cache[r.Uuid]
+			if ok {
+				res.Companies = append(res.Companies, *cached_c)
+				s.logger.Info("list company cache hit")
+				continue
+			}
+		}
+
 		var c *pb.Company
 		if c, err = s.GetCompany(ctx, r); err != nil {
 			return nil, err
 		}
 		res.Companies = append(res.Companies, *c)
+
+		if s.use_caching {
+			s.logger.Info("list company cache miss")
+			s.company_lock.Lock()
+			s.company_cache[r.Uuid] = c
+			s.company_lock.Unlock()
+		}
 	}
 	return res, nil
 }

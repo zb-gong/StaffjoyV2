@@ -170,24 +170,24 @@ class User(FastHttpUser):
                                    verify=False,
                                    name="list_admins")
 
-    @task
-    @tag('read')
-    @tag('task1')
-    def get_worker_of(self):
-        company_uuid, _, workers = random.choice(SharedData.workers)
-        user_uuid = random.choice(workers)['user_uuid']
-        response = self.client.get(COMPANY_URL + f"/v1/companies/{user_uuid}/info",
-                                   verify=False,
-                                   name="get_worker_of")
+    # @task
+    # @tag('read')
+    # @tag('task1')
+    # def get_worker_of(self):
+    #     company_uuid, _, workers = random.choice(SharedData.workers)
+    #     user_uuid = random.choice(workers)['user_uuid']
+    #     response = self.client.get(COMPANY_URL + f"/v1/companies/{user_uuid}/info",
+    #                                verify=False,
+    #                                name="get_worker_of")
 
-    @task
-    @tag('read')
-    def get_admin_of(self):
-        company_uuid, _, workers = random.choice(SharedData.workers)
-        user_uuid = random.choice(workers)['user_uuid']
-        response = self.client.get(COMPANY_URL + f"/v1/companies/{user_uuid}/admin_info",
-                                   verify=False,
-                                   name="get_admin_of")
+    # @task
+    # @tag('read')
+    # def get_admin_of(self):
+    #     company_uuid, _, workers = random.choice(SharedData.workers)
+    #     user_uuid = random.choice(workers)['user_uuid']
+    #     response = self.client.get(COMPANY_URL + f"/v1/companies/{user_uuid}/admin_info",
+    #                                verify=False,
+    #                                name="get_admin_of")
 
 
     # @task

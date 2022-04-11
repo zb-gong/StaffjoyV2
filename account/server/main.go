@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/go-gorp/gorp"
 	_ "github.com/go-sql-driver/mysql"
@@ -29,6 +30,9 @@ const (
 var (
 	logger *logrus.Entry
 	config environments.Config
+	// ListAccount cache
+	account_cache map[string]*pb.Account
+	account_lock  sync.RWMutex
 )
 
 // Setup environment, logger, etc

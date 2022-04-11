@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -38,6 +39,26 @@ type companyServer struct {
 	errorClient  environments.SentryClient
 	signingToken string
 	dbMap        *gorp.DbMap
+
+	use_caching bool
+	// ListWorkers cache & get_workers_in_team cache
+	workers_cache map[string]*pb.Workers
+	workers_lock  sync.RWMutex
+	// ListJobs cache
+	jobs_cache map[string]*pb.JobList
+	jobs_lock  sync.RWMutex
+	// ListCompany cache
+	company_cache map[string]*pb.Company
+	company_lock  sync.RWMutex
+	// ListTeams cache
+	teams_cache map[string]*pb.TeamList
+	teams_lock  sync.RWMutex
+	// Listadmin cache
+	admins_cache map[string]*pb.Admins
+	admins_lock  sync.RWMutex
+	// GetWorkerTeamInfo cache
+	workerteam_cache map[string]*pb.Worker
+	workerteam_lock  sync.RWMutex
 }
 
 // Setup environment, logger, etc
@@ -69,6 +90,16 @@ func main() {
 	s := &companyServer{logger: logger, signingToken: os.Getenv("SIGNING_SECRET")}
 	if !config.Debug {
 		s.errorClient = environments.ErrorClient(&config)
+	}
+
+	s.use_caching = (os.Getenv("USE_CACHING") == "1")
+	if s.use_caching {
+		s.workers_cache = make(map[string]*pb.Workers)
+		s.jobs_cache = make(map[string]*pb.JobList)
+		s.company_cache = make(map[string]*pb.Company)
+		s.teams_cache = make(map[string]*pb.TeamList)
+		s.admins_cache = make(map[string]*pb.Admins)
+		s.workerteam_cache = make(map[string]*pb.Worker)
 	}
 
 	// s.db, err = sql.Open("mysql", os.Getenv("MYSQL_CONFIG")+"?parseTime=true")

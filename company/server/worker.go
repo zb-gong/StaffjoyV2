@@ -11,6 +11,16 @@ import (
 )
 
 func (s *companyServer) ListWorkers(ctx context.Context, req *pb.WorkerListRequest) (*pb.Workers, error) {
+	if s.use_caching {
+		res, ok := s.workers_cache[req.TeamUuid]
+		if ok {
+			s.logger.Info("list worker cache hit")
+			return res, nil
+		} else {
+			s.logger.Info("list worker cache miss")
+		}
+	}
+
 	// Prep
 	_, _, err := getAuth(ctx)
 	// if err != nil {
@@ -48,6 +58,12 @@ func (s *companyServer) ListWorkers(ctx context.Context, req *pb.WorkerListReque
 			return nil, err
 		}
 		res.Workers = append(res.Workers, *e)
+	}
+
+	if s.use_caching {
+		s.workers_lock.Lock()
+		s.workers_cache[req.TeamUuid] = res
+		s.workers_lock.Unlock()
 	}
 	return res, nil
 }
@@ -107,6 +123,14 @@ func (s *companyServer) DeleteWorker(ctx context.Context, req *pb.Worker) (*empt
 	al := newAuditEntry(md, "worker", req.UserUuid, req.CompanyUuid, req.TeamUuid)
 	al.Log(logger, "removed worker")
 	go helpers.TrackEventFromMetadata(md, "worker_deleted")
+
+	if s.use_caching {
+		s.workers_lock.Lock()
+		if _, ok := s.workers_cache[req.TeamUuid]; ok {
+			delete(s.workers_cache, req.TeamUuid)
+		}
+		s.workers_lock.Unlock()
+	}
 	return &empty.Empty{}, nil
 
 }

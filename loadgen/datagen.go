@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	// account_pkg "v2.staffjoy.com/account"
-	tracing "v2.staffjoy.com/tracing"
+	// tracing "v2.staffjoy.com/tracing"
 	// company_pkg "v2.staffjoy.com/company"
 	_ "github.com/go-sql-driver/mysql"
 	"google.golang.org/grpc/metadata"
@@ -225,7 +225,7 @@ func generate_data() {
 }
 
 func main() {
-	_, closer := tracing.InitTracer("loadgen")
-	defer closer.Close()
+	// _, closer := tracing.InitTracer("loadgen")
+	// defer closer.Close()
 	generate_data()
 }

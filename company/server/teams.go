@@ -68,6 +68,16 @@ func (s *companyServer) CreateTeam(ctx context.Context, req *pb.CreateTeamReques
 }
 
 func (s *companyServer) ListTeams(ctx context.Context, req *pb.TeamListRequest) (*pb.TeamList, error) {
+	if s.use_caching {
+		res, ok := s.teams_cache[req.CompanyUuid]
+		if ok {
+			s.logger.Info(("list teams cache hit"))
+			return res, nil
+		} else {
+			s.logger.Info(("list teams cache miss"))
+		}
+	}
+
 	_, _, err := getAuth(ctx)
 	// if err != nil {
 	// 	return nil, s.internalError(err, "Failed to authorize")
@@ -103,6 +113,12 @@ func (s *companyServer) ListTeams(ctx context.Context, req *pb.TeamListRequest) 
 			return nil, err
 		}
 		res.Teams = append(res.Teams, *t)
+	}
+
+	if s.use_caching {
+		s.teams_lock.Lock()
+		s.teams_cache[req.CompanyUuid] = res
+		s.teams_lock.Unlock()
 	}
 	return res, nil
 }
@@ -186,6 +202,19 @@ func (s *companyServer) UpdateTeam(ctx context.Context, req *pb.Team) (*pb.Team,
 	al.Log(logger, "updated team")
 	go helpers.TrackEventFromMetadata(md, "team_updated")
 
+	if s.use_caching {
+		s.teams_lock.Lock()
+		if _, ok := s.teams_cache[t.CompanyUuid]; ok {
+			delete(s.teams_cache, t.CompanyUuid)
+			s.logger.Info("update team[orig %v] cache is invalidated", t.CompanyUuid)
+		}
+		if _, ok := s.teams_cache[req.CompanyUuid]; ok {
+			delete(s.teams_cache, req.CompanyUuid)
+			s.logger.Info("update team[req %v] cache is invalidated", req.CompanyUuid)
+		}
+		s.teams_lock.Unlock()
+	}
+
 	return req, nil
 }
 
@@ -194,6 +223,15 @@ func (s *companyServer) UpdateTeam(ctx context.Context, req *pb.Team) (*pb.Team,
 // worker might belong to multiple teams/companies so this will prob.
 // need to be refactored at some point
 func (s *companyServer) GetWorkerTeamInfo(ctx context.Context, req *pb.Worker) (*pb.Worker, error) {
+	if s.use_caching {
+		res, ok := s.workerteam_cache[req.UserUuid]
+		if ok {
+			s.logger.Info("workerteam get cache hit")
+			return res, nil
+		} else {
+			s.logger.Info("workerteam get cache miss")
+		}
+	}
 	_, _, err := getAuth(ctx)
 
 	// switch authz {
@@ -236,5 +274,10 @@ func (s *companyServer) GetWorkerTeamInfo(ctx context.Context, req *pb.Worker) (
 		UserUuid:    req.UserUuid,
 	}
 
+	if s.use_caching {
+		s.workerteam_lock.Lock()
+		s.workerteam_cache[req.UserUuid] = w
+		s.workerteam_lock.Unlock()
+	}
 	return w, nil
 }
