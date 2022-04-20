@@ -123,6 +123,17 @@ func (s *companyServer) Directory(ctx context.Context, req *pb.DirectoryListRequ
 			return nil, s.internalError(err, "error scanning database")
 		}
 
+		if s.use_caching {
+			if a, ok := s.account_cache[e.UserUuid]; ok {
+				copyAccountToDirectory(a, e)
+				res.Accounts = append(res.Accounts, *e)
+				s.logger.Info("directory account cache hit")
+				continue
+			} else {
+				s.logger.Info("directory account cache miss")
+			}
+		}
+
 		md := metadata.New(map[string]string{auth.AuthorizationMetadata: auth.AuthorizationCompanyService})
 		newCtx, cancel := context.WithCancel(metadata.NewOutgoingContext(context.Background(), md))
 		defer cancel()
@@ -137,6 +148,13 @@ func (s *companyServer) Directory(ctx context.Context, req *pb.DirectoryListRequ
 		if err != nil {
 			return nil, s.internalError(err, "error scanning database")
 		}
+
+		if s.use_caching {
+			s.account_lock.Lock()
+			s.account_cache[e.UserUuid] = a
+			s.account_lock.Unlock()
+		}
+
 		copyAccountToDirectory(a, e)
 		res.Accounts = append(res.Accounts, *e)
 	}
@@ -176,6 +194,16 @@ func (s *companyServer) GetDirectoryEntry(ctx context.Context, req *pb.Directory
 		return nil, s.internalError(err, "failed to query database")
 	}
 
+	if s.use_caching {
+		if a, ok := s.account_cache[e.UserUuid]; ok {
+			copyAccountToDirectory(a, e)
+			s.logger.Info("get directory entry account cache hit")
+			return e, nil
+		} else {
+			s.logger.Info("get directory entry account cache miss")
+		}
+	}
+
 	newMD := metadata.New(map[string]string{auth.AuthorizationMetadata: auth.AuthorizationCompanyService})
 	newCtx, cancel := context.WithCancel(metadata.NewOutgoingContext(context.Background(), newMD))
 	defer cancel()
@@ -189,6 +217,12 @@ func (s *companyServer) GetDirectoryEntry(ctx context.Context, req *pb.Directory
 	a, err := accountClient.Get(newCtx, &account.GetAccountRequest{Uuid: e.UserUuid})
 	if err != nil {
 		return nil, s.internalError(err, "error fetching account")
+	}
+
+	if s.use_caching {
+		s.account_lock.Lock()
+		s.account_cache[e.UserUuid] = a
+		s.account_lock.Unlock()
 	}
 	copyAccountToDirectory(a, e)
 	return e, nil

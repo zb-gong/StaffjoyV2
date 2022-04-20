@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -41,6 +42,11 @@ type accountServer struct {
 	signingToken string
 	dbMap        *gorp.DbMap
 	smsClient    sms.SmsServiceClient
+
+	use_caching bool
+	// ListAccount cache
+	account_cache map[string]*pb.Account
+	account_lock  sync.RWMutex
 }
 
 // GetOrCreate is for internal use by other APIs to match a user based on their phonenumber or email.
@@ -235,6 +241,14 @@ func (s *accountServer) List(ctx context.Context, req *pb.GetAccountListRequest)
 }
 
 func (s *accountServer) Get(ctx context.Context, req *pb.GetAccountRequest) (*pb.Account, error) {
+	if s.use_caching {
+		if res, ok := s.account_cache[req.Uuid]; ok {
+			s.logger.Info("get account cache hit")
+			return res, nil
+		} else {
+			s.logger.Info("get account cache miss")
+		}
+	}
 	// md, authz, err := getAuth(ctx)
 	// if err != nil {
 	// 	return nil, s.internalError(err, "Failed to authorize")
@@ -271,6 +285,13 @@ func (s *accountServer) Get(ctx context.Context, req *pb.GetAccountRequest) (*pb
 		return nil, s.internalError(err, "Unable to query database")
 	} else if obj == nil {
 		return nil, grpc.Errorf(codes.NotFound, "User with id %s not found", req.Uuid)
+	}
+
+	if s.use_caching {
+		s.logger.Info("list account cache miss")
+		s.account_lock.Lock()
+		s.account_cache[req.Uuid] = obj.(*pb.Account)
+		s.account_lock.Unlock()
 	}
 	return obj.(*pb.Account), nil
 }
@@ -374,7 +395,27 @@ func (s *accountServer) Update(ctx context.Context, req *pb.Account) (*pb.Accoun
 
 	go helpers.TrackEventFromMetadata(md, "account_updated")
 
-	// todo: cache callback
+	// cache callback
+	if s.use_caching {
+		if _, ok := s.account_cache[req.Uuid]; ok {
+			s.account_lock.Lock()
+			delete(s.account_cache, req.Uuid)
+			s.account_lock.Unlock()
+			s.logger.Info("update account[orig %v] cache is invalidated", req.Uuid)
+
+			// callback to invalidate the companies cache
+			companyClient, close, err := company.NewClient()
+			if err != nil {
+				return nil, s.internalError(err, "could not create company client")
+			}
+			defer close()
+
+			err = companyClient.InvalidateCache(ctx, &company.InvalidateCache{UUid: req.Uuid})
+			if err != nil {
+				s.logger.Info("cache is not successfully evicted")
+			}
+		}
+	}
 
 	return req, nil
 }
@@ -434,6 +475,16 @@ func (s *accountServer) UpdatePassword(ctx context.Context, req *pb.UpdatePasswo
 	}
 	al.Log(logger, "updated password")
 	go helpers.TrackEventFromMetadata(md, "password_updated")
+
+	// callback
+	if s.use_caching {
+		if _, ok := s.account_cache[req.Uuid]; ok {
+			s.account_lock.Lock()
+			delete(s.account_cache, req.Uuid)
+			s.account_lock.Unlock()
+			s.logger.Info("update account password[orig %v] cache is invalidated", req.Uuid)
+		}
+	}
 	return &empty.Empty{}, nil
 }
 
@@ -640,6 +691,14 @@ func (s *accountServer) ChangeEmail(ctx context.Context, req *pb.EmailConfirmati
 	al.Log(logger, "changed email")
 	go helpers.TrackEventFromMetadata(md, "email_updated")
 
+	if s.use_caching {
+		if _, ok := s.account_cache[req.Uuid]; ok {
+			s.account_lock.Lock()
+			delete(s.account_cache, req.Uuid)
+			s.account_lock.Unlock()
+			s.logger.Info("update account email[orig %v] cache is invalidated", req.Uuid)
+		}
+	}
 	return &empty.Empty{}, nil
 }
 

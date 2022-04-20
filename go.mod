@@ -33,6 +33,7 @@ require (
 	github.com/certifi/gocertifi v0.0.0-20210429200110-83314bf6d27c // indirect
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/gomodule/redigo v1.8.8 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

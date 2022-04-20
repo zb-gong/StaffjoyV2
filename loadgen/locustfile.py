@@ -6,6 +6,7 @@ import grpc
 import inspect
 import time
 import gevent
+import ast
 
 from locust.contrib.fasthttp import FastHttpUser
 from locust import task, events, constant, between, tag
@@ -25,7 +26,7 @@ ACCOUNT_URL="http://127.0.0.1:50006"
 class User(FastHttpUser):
     wait_time = between(0.25, 0.5)
 
-    host = 'https://pratikfegade.github.io'
+    host = 'https://test.github.io'
 
     def on_start(self):
         response = requests.get(COMPANY_URL + "/v1/companies", verify=False)
@@ -219,6 +220,7 @@ class User(FastHttpUser):
         response = self.client.get(COMPANY_URL + f"/v1/companies/{company_uuid}/teams/{team['uuid']}/jobs",
                                    verify=False,
                                    name="list_jobs")
+        print(json.loads(response.content))
 
     @task
     @tag('update')

@@ -11,8 +11,7 @@ import (
 
 func (s *companyServer) ListAdmins(ctx context.Context, req *pb.AdminListRequest) (*pb.Admins, error) {
 	if s.use_caching {
-		res, ok := s.admins_cache[req.CompanyUuid]
-		if ok {
+		if res, ok := s.admins_cache[req.CompanyUuid]; ok {
 			s.logger.Info("list admins cache hit")
 			return res, nil
 		} else {
@@ -126,11 +125,12 @@ func (s *companyServer) DeleteAdmin(ctx context.Context, req *pb.DirectoryEntryR
 	go helpers.TrackEventFromMetadata(md, "admin_deleted")
 
 	if s.use_caching {
-		s.admins_lock.Lock()
 		if _, ok := s.admins_cache[req.CompanyUuid]; ok {
+			s.admins_lock.Lock()
 			delete(s.admins_cache, req.CompanyUuid)
+			s.admins_lock.Unlock()
+			s.logger.Info("delete admin [company uuid: %v]", req.CompanyUuid)
 		}
-		s.admins_lock.Unlock()
 	}
 	return &empty.Empty{}, nil
 }
@@ -170,6 +170,14 @@ func (s *companyServer) CreateAdmin(ctx context.Context, req *pb.DirectoryEntryR
 	al.Log(logger, "added admin")
 	go helpers.TrackEventFromMetadata(md, "admin_created")
 
+	if s.use_caching {
+		if _, ok := s.admins_cache[req.CompanyUuid]; ok {
+			s.admins_lock.Lock()
+			delete(s.admins_cache, req.CompanyUuid)
+			s.admins_lock.Unlock()
+			s.logger.Info("create admin [company uuid:%v] cache is invalidated", req.CompanyUuid)
+		}
+	}
 	return e, nil
 }
 

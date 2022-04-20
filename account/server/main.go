@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"sync"
 
 	"github.com/go-gorp/gorp"
 	_ "github.com/go-sql-driver/mysql"
@@ -30,9 +29,6 @@ const (
 var (
 	logger *logrus.Entry
 	config environments.Config
-	// ListAccount cache
-	account_cache map[string]*pb.Account
-	account_lock  sync.RWMutex
 )
 
 // Setup environment, logger, etc
@@ -52,6 +48,11 @@ func main() {
 	s := &accountServer{logger: logger, signingToken: os.Getenv("SIGNING_SECRET"), config: config}
 	if !config.Debug {
 		s.errorClient = environments.ErrorClient(&config)
+	}
+
+	s.use_caching = (os.Getenv("USE_CACHING") == "1")
+	if s.use_caching {
+		s.account_cache = make(map[string]*pb.Account)
 	}
 
 	smsConn, err := grpc.Dial(sms.Endpoint, grpc.WithInsecure())

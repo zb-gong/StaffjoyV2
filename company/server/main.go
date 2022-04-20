@@ -16,6 +16,7 @@ import (
 
 	"google.golang.org/grpc"
 
+	pb2 "v2.staffjoy.com/account"
 	pb "v2.staffjoy.com/company"
 	"v2.staffjoy.com/environments"
 
@@ -59,6 +60,9 @@ type companyServer struct {
 	// GetWorkerTeamInfo cache
 	workerteam_cache map[string]*pb.Worker
 	workerteam_lock  sync.RWMutex
+	// account cache
+	account_cache map[string]*pb2.Account
+	account_lock  sync.RWMutex
 }
 
 // Setup environment, logger, etc
@@ -100,6 +104,7 @@ func main() {
 		s.teams_cache = make(map[string]*pb.TeamList)
 		s.admins_cache = make(map[string]*pb.Admins)
 		s.workerteam_cache = make(map[string]*pb.Worker)
+		s.account_cache = make(map[string]*pb2.Account)
 	}
 
 	// s.db, err = sql.Open("mysql", os.Getenv("MYSQL_CONFIG")+"?parseTime=true")

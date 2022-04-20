@@ -281,6 +281,10 @@ message GrowthGraphResponse {
 
 message GrowthGraphRequest {
 }
+
+message InvalidateCacheRequest {
+	string user_uuid = 1;
+}
 	
 service CompanyService {
 	rpc CreateCompany(CreateCompanyRequest) returns (Company) {
@@ -501,4 +505,6 @@ service CompanyService {
 	
 	rpc GetWorkerOf(WorkerOfRequest) returns (WorkerOfList) {}
 	rpc GetAdminOf(AdminOfRequest) returns (AdminOfList) {}
+
+	rpc InvalidateCache(InvalidateCacheRequest) returns (google.protobuf.Empty) {}
 }

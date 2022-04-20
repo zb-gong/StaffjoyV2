@@ -81,32 +81,24 @@ func (s *companyServer) ListCompanies(ctx context.Context, req *pb.CompanyListRe
 		}
 
 		// TODO - can we parallelize this, and maybe be hitting redis?
-		if s.use_caching {
-			cached_c, ok := s.company_cache[r.Uuid]
-			if ok {
-				res.Companies = append(res.Companies, *cached_c)
-				s.logger.Info("list company cache hit")
-				continue
-			}
-		}
-
 		var c *pb.Company
 		if c, err = s.GetCompany(ctx, r); err != nil {
 			return nil, err
 		}
 		res.Companies = append(res.Companies, *c)
-
-		if s.use_caching {
-			s.logger.Info("list company cache miss")
-			s.company_lock.Lock()
-			s.company_cache[r.Uuid] = c
-			s.company_lock.Unlock()
-		}
 	}
 	return res, nil
 }
 
 func (s *companyServer) GetCompany(ctx context.Context, req *pb.GetCompanyRequest) (*pb.Company, error) {
+	if s.use_caching {
+		if res, ok := s.company_cache[req.Uuid]; ok {
+			s.logger.Info("get company cache hit")
+			return res, nil
+		} else {
+			s.logger.Info("get company cache miss")
+		}
+	}
 	_, _, err := getAuth(ctx)
 	// if err != nil {
 	// 	return nil, s.internalError(err, "Failed to authorize")
@@ -132,6 +124,12 @@ func (s *companyServer) GetCompany(ctx context.Context, req *pb.GetCompanyReques
 		return nil, s.internalError(err, "unable to query database")
 	} else if obj == nil {
 		return nil, grpc.Errorf(codes.NotFound, "company not found")
+	}
+
+	if s.use_caching {
+		s.company_lock.Lock()
+		s.company_cache[req.Uuid] = obj.(*pb.Company)
+		s.company_lock.Unlock()
 	}
 	return obj.(*pb.Company), nil
 }
@@ -168,6 +166,15 @@ func (s *companyServer) UpdateCompany(ctx context.Context, req *pb.Company) (*pb
 	al.UpdatedContents = req
 	al.Log(logger, "updated company")
 	go helpers.TrackEventFromMetadata(md, "company_updated")
+
+	if s.use_caching {
+		if _, ok := s.company_cache[req.Uuid]; ok {
+			s.company_lock.Lock()
+			delete(s.company_cache, req.Uuid)
+			s.company_lock.Unlock()
+			s.logger.Info("update company[orig %v] cache is invalidated", req.Uuid)
+		}
+	}
 
 	return req, nil
 }
