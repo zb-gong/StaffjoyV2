@@ -11,12 +11,13 @@ import (
 )
 
 func (s *companyServer) ListWorkers(ctx context.Context, req *pb.WorkerListRequest) (*pb.Workers, error) {
+	defer helpers.Duration(helpers.Track("ListWorkers"))
 	if s.use_caching {
 		if res, ok := s.workers_cache[req.TeamUuid]; ok {
-			s.logger.Info("list worker cache hit")
+			s.logger.Info("list worker cache hit [team uuid:" + req.TeamUuid + "]")
 			return res, nil
 		} else {
-			s.logger.Info("list worker cache miss")
+			s.logger.Info("list worker cache miss [team uuid:" + req.TeamUuid + "]")
 		}
 	}
 
@@ -128,7 +129,7 @@ func (s *companyServer) DeleteWorker(ctx context.Context, req *pb.Worker) (*empt
 			s.workers_lock.Lock()
 			delete(s.workers_cache, req.TeamUuid)
 			s.workers_lock.Unlock()
-			s.logger.Info("delete worker [team uuid:%v]", req.TeamUuid)
+			s.logger.Info("delete worker [team uuid:" + req.TeamUuid + "]")
 		}
 	}
 	return &empty.Empty{}, nil
@@ -220,7 +221,7 @@ func (s *companyServer) CreateWorker(ctx context.Context, req *pb.Worker) (*pb.D
 			s.workers_lock.Lock()
 			delete(s.workers_cache, req.TeamUuid)
 			s.workers_lock.Unlock()
-			s.logger.Info("create worker [teamuuid:%v] cache is invalidated", req.TeamUuid)
+			s.logger.Info("create worker cache is invalidated [teamuuid:" + req.TeamUuid + "]")
 		}
 	}
 

@@ -79,8 +79,8 @@ class User(FastHttpUser):
 
         SharedData.initialized = False
 
-    @tag('read')
     @task
+    @tag('read')
     def get_workers_in_team(self):
         company_uuid, teams = random.choice(SharedData.teams)
         team = random.choice(teams)
@@ -90,6 +90,7 @@ class User(FastHttpUser):
 
     @task
     @tag('read')
+    @tag('list')
     def get_worker_team_info(self):
         _, _, workers = random.choice(SharedData.workers)
         user_uuid = random.choice(workers)['user_uuid']
@@ -99,6 +100,7 @@ class User(FastHttpUser):
 
     @task
     @tag('read')
+    @tag('list')
     def list_teams(self):
         company_uuid = random.choice(SharedData.companies)['uuid']
         response = self.client.get(COMPANY_URL + f"/v1/companies/{company_uuid}/teams",
@@ -133,6 +135,7 @@ class User(FastHttpUser):
 
     @task
     @tag('read')
+    @tag('r')
     def get_directory_list(self):
         company_uuid = random.choice(SharedData.companies)['uuid']
         response = self.client.get(COMPANY_URL + f"/v1/companies/{company_uuid}/directory",
@@ -141,6 +144,7 @@ class User(FastHttpUser):
 
     @task
     @tag('read')
+    @tag('rpc')
     def get_directory_entry(self):
         company_uuid, _, workers = random.choice(SharedData.workers)
         user_uuid = random.choice(workers)['user_uuid']
@@ -165,6 +169,7 @@ class User(FastHttpUser):
 
     @task
     @tag('read')
+    @tag('rpc')
     def list_admins(self):
         company_uuid = random.choice(SharedData.companies)['uuid']
         response = self.client.get(COMPANY_URL + f"/v1/companies/{company_uuid}/admins",
@@ -214,6 +219,7 @@ class User(FastHttpUser):
     @task
     @tag('read')
     @tag('task2')
+    @tag('list')
     def list_jobs(self):
         company_uuid, teams = random.choice(SharedData.teams)
         team = random.choice(teams)
@@ -258,6 +264,7 @@ class User(FastHttpUser):
     @task
     @tag('read')
     @tag('task3')
+    @tag('list')
     def list_workers(self):
         company_uuid, team, _ = random.choice(SharedData.workers)
         response = self.client.get(COMPANY_URL + f"/v1/companies/{company_uuid}/teams/{team['uuid']}/workers",

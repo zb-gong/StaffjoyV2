@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang/protobuf/ptypes/empty"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -90,6 +91,7 @@ func (s *companyServer) CreateDirectory(ctx context.Context, req *pb.NewDirector
 }
 
 func (s *companyServer) Directory(ctx context.Context, req *pb.DirectoryListRequest) (*pb.DirectoryList, error) {
+	defer helpers.Duration(helpers.Track("Directory"))
 	_, _, err := getAuth(ctx)
 	// if err != nil {
 	// 	return nil, s.internalError(err, "Failed to authorize")
@@ -127,10 +129,10 @@ func (s *companyServer) Directory(ctx context.Context, req *pb.DirectoryListRequ
 			if a, ok := s.account_cache[e.UserUuid]; ok {
 				copyAccountToDirectory(a, e)
 				res.Accounts = append(res.Accounts, *e)
-				s.logger.Info("directory account cache hit")
+				s.logger.Info("directory account cache hit [account uuid:" + e.UserUuid + "]")
 				continue
 			} else {
-				s.logger.Info("directory account cache miss")
+				s.logger.Info("directory account cache miss [account uuid:" + e.UserUuid + "]")
 			}
 		}
 
@@ -162,6 +164,7 @@ func (s *companyServer) Directory(ctx context.Context, req *pb.DirectoryListRequ
 }
 
 func (s *companyServer) GetDirectoryEntry(ctx context.Context, req *pb.DirectoryEntryRequest) (*pb.DirectoryEntry, error) {
+	defer helpers.Duration(helpers.Track("GetDirectory"))
 	_, _, err := getAuth(ctx)
 	// if err != nil {
 	// 	return nil, s.internalError(err, "Failed to authorize")
@@ -197,10 +200,10 @@ func (s *companyServer) GetDirectoryEntry(ctx context.Context, req *pb.Directory
 	if s.use_caching {
 		if a, ok := s.account_cache[e.UserUuid]; ok {
 			copyAccountToDirectory(a, e)
-			s.logger.Info("get directory entry account cache hit")
+			s.logger.Info("get directory entry account cache hit [account uuid:" + e.UserUuid + "]")
 			return e, nil
 		} else {
-			s.logger.Info("get directory entry account cache miss")
+			s.logger.Info("get directory entry account cache miss [account uuid:" + e.UserUuid + "]")
 		}
 	}
 
@@ -347,4 +350,30 @@ func (s *companyServer) GetAssociations(ctx context.Context, req *pb.DirectoryLi
 
 	}
 	return res, nil
+}
+
+func (s *companyServer) InvalidateCache(ctx context.Context, req *pb.InvalidateCacheRequest) (*empty.Empty, error) {
+	if _, ok := s.account_cache[req.UserUuid]; ok {
+		s.account_lock.Lock()
+		delete(s.account_cache, req.UserUuid)
+		s.account_lock.Unlock()
+		s.logger.Info("Invalidate cache [account uuid:" + req.UserUuid + "]")
+	}
+
+	rows, err := s.db.Query("select company_uuid from admin where user_uuid=?", req.UserUuid)
+	if err != nil {
+		return nil, s.internalError(err, "Unable to query database")
+	}
+	for rows.Next() {
+		var companyUUID string
+		if err := rows.Scan(&companyUUID); err != nil {
+			return nil, s.internalError(err, "err scanning database")
+		}
+		if _, ok := s.admins_cache[companyUUID]; ok {
+			s.admins_lock.Lock()
+			delete(s.admins_cache, companyUUID)
+			s.admins_lock.Unlock()
+		}
+	}
+	return &empty.Empty{}, nil
 }

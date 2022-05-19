@@ -10,12 +10,13 @@ import (
 )
 
 func (s *companyServer) ListAdmins(ctx context.Context, req *pb.AdminListRequest) (*pb.Admins, error) {
+	defer helpers.Duration(helpers.Track("ListAdmins"))
 	if s.use_caching {
 		if res, ok := s.admins_cache[req.CompanyUuid]; ok {
-			s.logger.Info("list admins cache hit")
+			s.logger.Info("list admins cache hit [company uuid:" + req.CompanyUuid + "]")
 			return res, nil
 		} else {
-			s.logger.Info("list admins cache miss")
+			s.logger.Info("list admins cache miss [company uuid:" + req.CompanyUuid + "]")
 		}
 	}
 	_, _, err := getAuth(ctx)
@@ -129,7 +130,7 @@ func (s *companyServer) DeleteAdmin(ctx context.Context, req *pb.DirectoryEntryR
 			s.admins_lock.Lock()
 			delete(s.admins_cache, req.CompanyUuid)
 			s.admins_lock.Unlock()
-			s.logger.Info("delete admin [company uuid: %v]", req.CompanyUuid)
+			s.logger.Info("delete admin [company uuid:" + req.CompanyUuid + "]")
 		}
 	}
 	return &empty.Empty{}, nil
@@ -175,7 +176,7 @@ func (s *companyServer) CreateAdmin(ctx context.Context, req *pb.DirectoryEntryR
 			s.admins_lock.Lock()
 			delete(s.admins_cache, req.CompanyUuid)
 			s.admins_lock.Unlock()
-			s.logger.Info("create admin [company uuid:%v] cache is invalidated", req.CompanyUuid)
+			s.logger.Info("create admin cache is invalidated [company uuid:" + req.CompanyUuid + "]")
 		}
 	}
 	return e, nil

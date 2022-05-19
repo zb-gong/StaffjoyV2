@@ -69,7 +69,7 @@ func (s *companyServer) CreateTeam(ctx context.Context, req *pb.CreateTeamReques
 			s.teams_lock.Lock()
 			delete(s.teams_cache, req.CompanyUuid)
 			s.teams_lock.Unlock()
-			s.logger.Info("create team [company uuid:%v] cache is invalidated", req.CompanyUuid)
+			s.logger.Info("create team cache is invalidated [company uuid:" + req.CompanyUuid + "]")
 		}
 	}
 
@@ -77,12 +77,13 @@ func (s *companyServer) CreateTeam(ctx context.Context, req *pb.CreateTeamReques
 }
 
 func (s *companyServer) ListTeams(ctx context.Context, req *pb.TeamListRequest) (*pb.TeamList, error) {
+	defer helpers.Duration(helpers.Track("ListTeams"))
 	if s.use_caching {
 		if res, ok := s.teams_cache[req.CompanyUuid]; ok {
-			s.logger.Info(("list teams cache hit"))
+			s.logger.Info("list teams cache hit [company uuid:" + req.CompanyUuid + "]")
 			return res, nil
 		} else {
-			s.logger.Info(("list teams cache miss"))
+			s.logger.Info("list teams cache miss [company uuid:" + req.CompanyUuid + "]")
 		}
 	}
 
@@ -215,13 +216,13 @@ func (s *companyServer) UpdateTeam(ctx context.Context, req *pb.Team) (*pb.Team,
 			s.teams_lock.Lock()
 			delete(s.teams_cache, t.CompanyUuid)
 			s.teams_lock.Unlock()
-			s.logger.Info("update team[orig %v] cache is invalidated", t.CompanyUuid)
+			s.logger.Info("update team cache is invalidated [orig:" + t.CompanyUuid + "]")
 		}
 		if _, ok := s.teams_cache[req.CompanyUuid]; ok {
 			s.teams_lock.Lock()
 			delete(s.teams_cache, req.CompanyUuid)
 			s.teams_lock.Unlock()
-			s.logger.Info("update team[req %v] cache is invalidated", req.CompanyUuid)
+			s.logger.Info("update team cache is invalidated [req:" + req.CompanyUuid + "]")
 		}
 	}
 
@@ -233,12 +234,13 @@ func (s *companyServer) UpdateTeam(ctx context.Context, req *pb.Team) (*pb.Team,
 // worker might belong to multiple teams/companies so this will prob.
 // need to be refactored at some point
 func (s *companyServer) GetWorkerTeamInfo(ctx context.Context, req *pb.Worker) (*pb.Worker, error) {
+	defer helpers.Duration(helpers.Track("GetWorkerTeamInfo"))
 	if s.use_caching {
 		if res, ok := s.workerteam_cache[req.UserUuid]; ok {
-			s.logger.Info("workerteam get cache hit")
+			s.logger.Info("workerteam get cache hit [user uuid:" + req.UserUuid + "]")
 			return res, nil
 		} else {
-			s.logger.Info("workerteam get cache miss")
+			s.logger.Info("workerteam get cache miss [user uuid:" + req.UserUuid + "]")
 		}
 	}
 	_, _, err := getAuth(ctx)

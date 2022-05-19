@@ -55,7 +55,7 @@ func (s *companyServer) CreateJob(ctx context.Context, req *pb.CreateJobRequest)
 			s.jobs_lock.Lock()
 			delete(s.jobs_cache, req.TeamUuid)
 			s.jobs_lock.Unlock()
-			s.logger.Info("create job [team uuid:%v] cache is invalidated", req.TeamUuid)
+			s.logger.Info("create job cache is invalidated [team uuid:" + req.TeamUuid + "]")
 		}
 	}
 
@@ -63,12 +63,13 @@ func (s *companyServer) CreateJob(ctx context.Context, req *pb.CreateJobRequest)
 }
 
 func (s *companyServer) ListJobs(ctx context.Context, req *pb.JobListRequest) (*pb.JobList, error) {
+	defer helpers.Duration(helpers.Track("ListJobs"))
 	if s.use_caching {
 		if res, ok := s.jobs_cache[req.TeamUuid]; ok {
-			s.logger.Info("list job cache hit")
+			s.logger.Info("list job cache hit [team uuid:" + req.TeamUuid + "]")
 			return res, nil
 		} else {
-			s.logger.Info("list job cache miss")
+			s.logger.Info("list job cache miss [team uuid:" + req.TeamUuid + "]")
 		}
 	}
 
@@ -188,13 +189,13 @@ func (s *companyServer) UpdateJob(ctx context.Context, req *pb.Job) (*pb.Job, er
 		if _, ok := s.jobs_cache[orig.TeamUuid]; ok {
 			s.jobs_lock.Lock()
 			delete(s.jobs_cache, orig.TeamUuid)
-			s.logger.Info("update job[orig %v] cache is invalidated", orig.TeamUuid)
+			s.logger.Info("update job cache is invalidated [orig:" + orig.TeamUuid + "]")
 			s.jobs_lock.Unlock()
 		}
 		if _, ok := s.jobs_cache[req.TeamUuid]; ok {
 			s.jobs_lock.Lock()
 			delete(s.jobs_cache, req.TeamUuid)
-			s.logger.Info("update job[req %v] cache is invalidated", req.TeamUuid)
+			s.logger.Info("update job cache is invalidated [req:", req.TeamUuid+"]")
 			s.jobs_lock.Unlock()
 		}
 	}

@@ -91,12 +91,13 @@ func (s *companyServer) ListCompanies(ctx context.Context, req *pb.CompanyListRe
 }
 
 func (s *companyServer) GetCompany(ctx context.Context, req *pb.GetCompanyRequest) (*pb.Company, error) {
+	// defer helpers.Duration(helpers.Track("GetCompany"))
 	if s.use_caching {
 		if res, ok := s.company_cache[req.Uuid]; ok {
-			s.logger.Info("get company cache hit")
+			// s.logger.Info("get company cache hit [company uuid:" + req.Uuid + "]")
 			return res, nil
 		} else {
-			s.logger.Info("get company cache miss")
+			// s.logger.Info("get company cache miss [compant uuid:" + req.Uuid + "]")
 		}
 	}
 	_, _, err := getAuth(ctx)
@@ -172,7 +173,7 @@ func (s *companyServer) UpdateCompany(ctx context.Context, req *pb.Company) (*pb
 			s.company_lock.Lock()
 			delete(s.company_cache, req.Uuid)
 			s.company_lock.Unlock()
-			s.logger.Info("update company[orig %v] cache is invalidated", req.Uuid)
+			s.logger.Info("update company cache is invalidated [orig:" + req.Uuid + "]")
 		}
 	}
 

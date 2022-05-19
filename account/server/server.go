@@ -243,10 +243,10 @@ func (s *accountServer) List(ctx context.Context, req *pb.GetAccountListRequest)
 func (s *accountServer) Get(ctx context.Context, req *pb.GetAccountRequest) (*pb.Account, error) {
 	if s.use_caching {
 		if res, ok := s.account_cache[req.Uuid]; ok {
-			s.logger.Info("get account cache hit")
+			s.logger.Info("get account cache hit [account uuid:" + req.Uuid + "]")
 			return res, nil
 		} else {
-			s.logger.Info("get account cache miss")
+			s.logger.Info("get account cache miss [account uuid:" + req.Uuid + "]")
 		}
 	}
 	// md, authz, err := getAuth(ctx)
@@ -288,7 +288,6 @@ func (s *accountServer) Get(ctx context.Context, req *pb.GetAccountRequest) (*pb
 	}
 
 	if s.use_caching {
-		s.logger.Info("list account cache miss")
 		s.account_lock.Lock()
 		s.account_cache[req.Uuid] = obj.(*pb.Account)
 		s.account_lock.Unlock()
@@ -401,7 +400,7 @@ func (s *accountServer) Update(ctx context.Context, req *pb.Account) (*pb.Accoun
 			s.account_lock.Lock()
 			delete(s.account_cache, req.Uuid)
 			s.account_lock.Unlock()
-			s.logger.Info("update account[orig %v] cache is invalidated", req.Uuid)
+			s.logger.Info("update account cache is invalidated [orig:" + req.Uuid + "]")
 
 			// callback to invalidate the companies cache
 			companyClient, close, err := company.NewClient()
@@ -410,7 +409,7 @@ func (s *accountServer) Update(ctx context.Context, req *pb.Account) (*pb.Accoun
 			}
 			defer close()
 
-			err = companyClient.InvalidateCache(ctx, &company.InvalidateCache{UUid: req.Uuid})
+			_, err = companyClient.InvalidateCache(ctx, &company.InvalidateCacheRequest{UserUuid: req.Uuid})
 			if err != nil {
 				s.logger.Info("cache is not successfully evicted")
 			}
@@ -482,7 +481,19 @@ func (s *accountServer) UpdatePassword(ctx context.Context, req *pb.UpdatePasswo
 			s.account_lock.Lock()
 			delete(s.account_cache, req.Uuid)
 			s.account_lock.Unlock()
-			s.logger.Info("update account password[orig %v] cache is invalidated", req.Uuid)
+			s.logger.Info("update account password cache is invalidated [orig:" + req.Uuid + "]")
+
+			//callback to invalidate the companies cache
+			companyClient, close, err := company.NewClient()
+			if err != nil {
+				return nil, s.internalError(err, "could not create company client")
+			}
+			defer close()
+
+			_, err = companyClient.InvalidateCache(ctx, &company.InvalidateCacheRequest{UserUuid: req.Uuid})
+			if err != nil {
+				s.logger.Info("cache is not successfully evicted")
+			}
 		}
 	}
 	return &empty.Empty{}, nil
@@ -696,7 +707,19 @@ func (s *accountServer) ChangeEmail(ctx context.Context, req *pb.EmailConfirmati
 			s.account_lock.Lock()
 			delete(s.account_cache, req.Uuid)
 			s.account_lock.Unlock()
-			s.logger.Info("update account email[orig %v] cache is invalidated", req.Uuid)
+			s.logger.Info("update account email cache is invalidated [orig:" + req.Uuid + "]")
+		}
+
+		// callback to invalidate the companies cache
+		companyClient, close, err := company.NewClient()
+		if err != nil {
+			return nil, s.internalError(err, "could not create company client")
+		}
+		defer close()
+
+		_, err = companyClient.InvalidateCache(ctx, &company.InvalidateCacheRequest{UserUuid: req.Uuid})
+		if err != nil {
+			s.logger.Info("cache is not successfully evicted")
 		}
 	}
 	return &empty.Empty{}, nil
@@ -736,7 +759,7 @@ func (s *accountServer) SyncUser(ctx context.Context, req *pb.SyncUserRequest) (
 		return nil, s.internalError(err, "could not fetch user")
 	}
 	if u.Phonenumber == "" && u.Email == "" {
-		s.logger.Infof("skipping sync for user %v because no email or phonenumber", u.Uuid)
+		s.logger.Infof("skipping sync for user %s because no email or phonenumber", u.Uuid)
 	}
 
 	companyClient, close, err := company.NewClient()

@@ -2,6 +2,8 @@ package helpers
 
 import (
 	"context"
+	"log"
+	"time"
 
 	"google.golang.org/grpc/metadata"
 	"v2.staffjoy.com/account"
@@ -58,4 +60,12 @@ func SyncUser(userUUID string) (err error) {
 	ctx := context.Background()
 	_, err = s.SyncUser(ctx, &account.SyncUserRequest{Uuid: userUUID})
 	return
+}
+
+// calculate computation time
+func Track(msg string) (string, time.Time) {
+	return msg, time.Now()
+}
+func Duration(msg string, start time.Time) {
+	log.Printf("%v: %v\n", msg, time.Since(start))
 }
