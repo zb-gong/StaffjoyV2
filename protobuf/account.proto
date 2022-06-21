@@ -1,12 +1,12 @@
 syntax = "proto3";
-package account;
+package staffjoy.account;
 
 option go_package = "v2.staffjoy.com/account";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
-import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
 
 option (gogoproto.sizer_all) = true;
 option (gogoproto.marshaler_all) = true;
@@ -24,6 +24,7 @@ message Account {
 	bool support = 6 [(gogoproto.moretags) = "db:\"support\""];
 	string phonenumber = 7 [(gogoproto.moretags) = "db:\"phonenumber\""];
 	string photo_url = 8 [(gogoproto.moretags) = "db:\"photo_url\""];
+	int32 version = 9;
 }
 
 message UpdatePasswordRequest {
@@ -90,6 +91,12 @@ message SyncUserRequest {
 	string uuid = 1;
 }
 
+message RowsOfAccount { repeated string uuid = 1; }
+
+message GetAccountVersionRequest { string uuid = 1; }
+
+message AccountVersion { int32 account_ver = 1; }
+
 service AccountService {
 	rpc Create(CreateAccountRequest) returns (Account) {
 		option (google.api.http) = {
@@ -97,16 +104,8 @@ service AccountService {
             body: "*"
 		};
 	}
-	rpc List(GetAccountListRequest) returns (AccountList) {
-	    option (google.api.http) = {
-		    get: "/v1/accounts"
-		};
-	}
-	rpc Get(GetAccountRequest) returns (Account) {
-		option (google.api.http) = {
-			get: "/v1/accounts/{uuid}"
-		};
-	}
+	rpc List(GetAccountListRequest) returns (AccountList) {}
+	rpc Get(GetAccountRequest) returns (Account) {}
 	rpc Update(Account) returns (Account) {
 		option (google.api.http) = {
 			put: "/v1/accounts/{uuid}"
@@ -135,4 +134,8 @@ service AccountService {
 	rpc TrackEvent(TrackEventRequest) returns (google.protobuf.Empty) {}
 
 	rpc SyncUser(SyncUserRequest) returns (google.protobuf.Empty) {}
+
+	rpc ListAccountRows(GetAccountListRequest) returns (RowsOfAccount) {}
+
+	rpc GetAccountVersion(GetAccountVersionRequest) returns (AccountVersion) {}
 }

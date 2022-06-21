@@ -5,8 +5,8 @@ ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )""/../"
 all="all"
 
 if [ "$1" == "$all" ]; then
-    services=( "account" "bot" "company" "email" "sms" )
-    api_services=( "account" "company" )
+    services=( "account" "bot" "company" "email" "sms" "frontcache" )
+    api_services=( "account" "company" "frontcache")
 else
     services=( "$1" )
 fi

@@ -9,6 +9,7 @@ import (
 
 	pb "v2.staffjoy.com/company"
 	"v2.staffjoy.com/crypto"
+	"v2.staffjoy.com/frontcache"
 	"v2.staffjoy.com/helpers"
 )
 
@@ -39,7 +40,7 @@ func (s *companyServer) CreateJob(ctx context.Context, req *pb.CreateJobRequest)
 	if err != nil {
 		return nil, s.internalError(err, "Cannot generate a uuid")
 	}
-	j := &pb.Job{Uuid: uuid.String(), Name: req.Name, Color: req.Color, CompanyUuid: req.CompanyUuid, TeamUuid: req.TeamUuid}
+	j := &pb.Job{Uuid: uuid.String(), Name: req.Name, Color: req.Color, CompanyUuid: req.CompanyUuid, TeamUuid: req.TeamUuid, Version: 0}
 
 	if err = s.dbMap.Insert(j); err != nil {
 		return nil, s.internalError(err, "could not create job")
@@ -51,11 +52,31 @@ func (s *companyServer) CreateJob(ctx context.Context, req *pb.CreateJobRequest)
 	go helpers.TrackEventFromMetadata(md, "job_created")
 
 	if s.use_caching {
-		if _, ok := s.jobs_cache[req.TeamUuid]; ok {
+		s.job_lock.Lock()
+		s.job_cache[j.Uuid] = j
+		s.job_lock.Unlock()
+
+		if js, ok := s.jobs_cache[req.TeamUuid]; ok {
 			s.jobs_lock.Lock()
-			delete(s.jobs_cache, req.TeamUuid)
+			s.jobs_cache[req.TeamUuid].Jobs = append(js.Jobs, *j)
+			if !s.use_callback {
+				s.jobs_cache[req.TeamUuid].Version = js.Version + 1
+			}
 			s.jobs_lock.Unlock()
-			s.logger.Info("create job cache is invalidated [team uuid:" + req.TeamUuid + "]")
+			s.logger.Info("CreateJob updates jobs list [team uuid:" + req.TeamUuid + "]")
+
+			if s.use_callback {
+				frontcacheClient, close, err := frontcache.NewClient()
+				if err != nil {
+					return nil, s.internalError(err, "unable to init frontcache connection")
+				}
+				defer close()
+
+				_, err = frontcacheClient.InvalidateJobsCache(ctx, &frontcache.InvalidateJobsCacheRequest{TeamUuid: req.TeamUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache job list cache")
+				}
+			}
 		}
 	}
 
@@ -64,15 +85,6 @@ func (s *companyServer) CreateJob(ctx context.Context, req *pb.CreateJobRequest)
 
 func (s *companyServer) ListJobs(ctx context.Context, req *pb.JobListRequest) (*pb.JobList, error) {
 	defer helpers.Duration(helpers.Track("ListJobs"))
-	if s.use_caching {
-		if res, ok := s.jobs_cache[req.TeamUuid]; ok {
-			s.logger.Info("list job cache hit [team uuid:" + req.TeamUuid + "]")
-			return res, nil
-		} else {
-			s.logger.Info("list job cache miss [team uuid:" + req.TeamUuid + "]")
-		}
-	}
-
 	_, _, err := getAuth(ctx)
 	// if err != nil {
 	// 	return nil, s.internalError(err, "failed to authorize")
@@ -90,7 +102,16 @@ func (s *companyServer) ListJobs(ctx context.Context, req *pb.JobListRequest) (*
 		return nil, err
 	}
 
-	res := &pb.JobList{}
+	if s.use_caching {
+		if res, ok := s.jobs_cache[req.TeamUuid]; ok {
+			s.logger.Info("list job cache hit [team uuid:" + req.TeamUuid + "]")
+			return res, nil
+		} else {
+			s.logger.Info("list job cache miss [team uuid:" + req.TeamUuid + "]")
+		}
+	}
+
+	res := &pb.JobList{Version: 0}
 	rows, err := s.db.Query("select uuid from job where team_uuid=?", req.TeamUuid)
 	if err != nil {
 		return nil, s.internalError(err, "unable to query database")
@@ -137,6 +158,15 @@ func (s *companyServer) GetJob(ctx context.Context, req *pb.GetJobRequest) (*pb.
 		return nil, err
 	}
 
+	if s.use_caching {
+		if res, ok := s.job_cache[req.Uuid]; ok {
+			s.logger.Info("GetJob cache hit [job uuid:" + req.Uuid + "]")
+			return res, nil
+		} else {
+			s.logger.Info("GetJob cache miss [job uuid:" + req.Uuid + "]")
+		}
+	}
+
 	obj, err := s.dbMap.Get(pb.Job{}, req.Uuid)
 	if err != nil {
 		return nil, s.internalError(err, "unable to query database")
@@ -146,10 +176,17 @@ func (s *companyServer) GetJob(ctx context.Context, req *pb.GetJobRequest) (*pb.
 	j := obj.(*pb.Job)
 	j.CompanyUuid = req.CompanyUuid
 	j.TeamUuid = req.TeamUuid
+
+	if s.use_caching {
+		s.job_lock.Lock()
+		s.job_cache[req.Uuid] = j
+		s.job_lock.Unlock()
+	}
 	return j, nil
 }
 
 func (s *companyServer) UpdateJob(ctx context.Context, req *pb.Job) (*pb.Job, error) {
+	defer helpers.Duration(helpers.Track("UpdateJob"))
 	md, _, err := getAuth(ctx)
 	// switch authz {
 	// case auth.AuthorizationAuthenticatedUser:
@@ -186,18 +223,85 @@ func (s *companyServer) UpdateJob(ctx context.Context, req *pb.Job) (*pb.Job, er
 
 	// callback to the job list cache
 	if s.use_caching {
-		if _, ok := s.jobs_cache[orig.TeamUuid]; ok {
-			s.jobs_lock.Lock()
-			delete(s.jobs_cache, orig.TeamUuid)
-			s.logger.Info("update job cache is invalidated [orig:" + orig.TeamUuid + "]")
-			s.jobs_lock.Unlock()
+		frontcacheClient, close, err := frontcache.NewClient()
+		if err != nil {
+			return nil, s.internalError(err, "unable to init frontcache connection")
 		}
-		if _, ok := s.jobs_cache[req.TeamUuid]; ok {
+		defer close()
+
+		// Can be optimized by judging whether original uuid equals to request uuid
+		if js, ok := s.jobs_cache[orig.TeamUuid]; ok {
 			s.jobs_lock.Lock()
-			delete(s.jobs_cache, req.TeamUuid)
-			s.logger.Info("update job cache is invalidated [req:", req.TeamUuid+"]")
+			var index int
+			for i, v := range js.Jobs {
+				if v.Uuid == req.Uuid {
+					index = i
+					break
+				}
+			}
+			s.jobs_cache[orig.TeamUuid].Jobs[index] = js.Jobs[len(js.Jobs)-1]
+			s.jobs_cache[orig.TeamUuid].Jobs = s.jobs_cache[orig.TeamUuid].Jobs[:len(js.Jobs)-1]
+			if !s.use_callback {
+				s.jobs_cache[orig.TeamUuid].Version = js.Version + 1
+			}
 			s.jobs_lock.Unlock()
+			s.logger.Info("UpdateJob udpates orig jobs cache [orig:" + orig.TeamUuid + "]")
+
+			if s.use_callback {
+				_, err = frontcacheClient.InvalidateJobsCache(ctx, &frontcache.InvalidateJobsCacheRequest{TeamUuid: orig.TeamUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache job list cache")
+				}
+			}
+		}
+		if js, ok := s.jobs_cache[req.TeamUuid]; ok {
+			s.jobs_lock.Lock()
+			s.jobs_cache[req.TeamUuid].Jobs = append(js.Jobs, *req)
+			if !s.use_callback && req.TeamUuid != orig.TeamUuid {
+				s.jobs_cache[req.TeamUuid].Version = js.Version + 1
+			}
+			s.jobs_lock.Unlock()
+			s.logger.Info("UpdateJob updates req jobs cache [req:" + req.TeamUuid + "]")
+
+			if s.use_callback {
+				_, err = frontcacheClient.InvalidateJobsCache(ctx, &frontcache.InvalidateJobsCacheRequest{TeamUuid: req.TeamUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache job list cache")
+				}
+			}
+		}
+		if js, ok := s.job_cache[orig.Uuid]; ok {
+			s.job_lock.Lock()
+			s.job_cache[orig.Uuid] = req
+			if !s.use_callback {
+				s.job_cache[orig.Uuid].Version = js.Version + 1
+			}
+			s.job_lock.Unlock()
+			s.logger.Info("UpdateJob udpates job cache [job uuid:" + orig.Uuid + "]")
+
+			if s.use_callback {
+				_, err = frontcacheClient.InvalidateJobCache(ctx, &frontcache.InvalidateJobCacheRequest{JobUuid: orig.Uuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache job cache")
+				}
+			}
 		}
 	}
 	return req, nil
+}
+
+func (s *companyServer) GetJobsVersion(ctx context.Context, req *pb.GetJobsVersionRequest) (*pb.JobsVersion, error) {
+	if res, ok := s.jobs_cache[req.Uuid]; ok {
+		return &pb.JobsVersion{JobsVer: res.Version}, nil
+	}
+	return &pb.JobsVersion{JobsVer: 0}, nil
+	// return nil, fmt.Errorf("GetJobsVersion not found req uuid")
+}
+
+func (s *companyServer) GetJobVersion(ctx context.Context, req *pb.GetJobVersionRequest) (*pb.JobVersion, error) {
+	if res, ok := s.job_cache[req.Uuid]; ok {
+		return &pb.JobVersion{JobVer: res.Version}, nil
+	}
+	return &pb.JobVersion{JobVer: 0}, nil
+	// return nil, fmt.Errorf("GetJobVersion not found req uuid")
 }

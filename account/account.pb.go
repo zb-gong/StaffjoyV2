@@ -42,6 +42,7 @@ type Account struct {
 	Support            bool      `protobuf:"varint,6,opt,name=support,proto3" json:"support,omitempty" db:"support"`
 	Phonenumber        string    `protobuf:"bytes,7,opt,name=phonenumber,proto3" json:"phonenumber,omitempty" db:"phonenumber"`
 	PhotoUrl           string    `protobuf:"bytes,8,opt,name=photo_url,json=photoUrl,proto3" json:"photo_url,omitempty" db:"photo_url"`
+	Version            int32     `protobuf:"varint,9,opt,name=version,proto3" json:"version,omitempty"`
 }
 
 func (m *Account) Reset()         { *m = Account{} }
@@ -131,6 +132,13 @@ func (m *Account) GetPhotoUrl() string {
 		return m.PhotoUrl
 	}
 	return ""
+}
+
+func (m *Account) GetVersion() int32 {
+	if m != nil {
+		return m.Version
+	}
+	return 0
 }
 
 type UpdatePasswordRequest struct {
@@ -801,88 +809,230 @@ func (m *SyncUserRequest) GetUuid() string {
 	return ""
 }
 
+type RowsOfAccount struct {
+	Uuid []string `protobuf:"bytes,1,rep,name=uuid,proto3" json:"uuid,omitempty"`
+}
+
+func (m *RowsOfAccount) Reset()         { *m = RowsOfAccount{} }
+func (m *RowsOfAccount) String() string { return proto.CompactTextString(m) }
+func (*RowsOfAccount) ProtoMessage()    {}
+func (*RowsOfAccount) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8e28828dcb8d24f0, []int{14}
+}
+func (m *RowsOfAccount) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *RowsOfAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_RowsOfAccount.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *RowsOfAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RowsOfAccount.Merge(m, src)
+}
+func (m *RowsOfAccount) XXX_Size() int {
+	return m.Size()
+}
+func (m *RowsOfAccount) XXX_DiscardUnknown() {
+	xxx_messageInfo_RowsOfAccount.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RowsOfAccount proto.InternalMessageInfo
+
+func (m *RowsOfAccount) GetUuid() []string {
+	if m != nil {
+		return m.Uuid
+	}
+	return nil
+}
+
+type GetAccountVersionRequest struct {
+	Uuid string `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+}
+
+func (m *GetAccountVersionRequest) Reset()         { *m = GetAccountVersionRequest{} }
+func (m *GetAccountVersionRequest) String() string { return proto.CompactTextString(m) }
+func (*GetAccountVersionRequest) ProtoMessage()    {}
+func (*GetAccountVersionRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8e28828dcb8d24f0, []int{15}
+}
+func (m *GetAccountVersionRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *GetAccountVersionRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_GetAccountVersionRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *GetAccountVersionRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAccountVersionRequest.Merge(m, src)
+}
+func (m *GetAccountVersionRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *GetAccountVersionRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAccountVersionRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAccountVersionRequest proto.InternalMessageInfo
+
+func (m *GetAccountVersionRequest) GetUuid() string {
+	if m != nil {
+		return m.Uuid
+	}
+	return ""
+}
+
+type AccountVersion struct {
+	AccountVer int32 `protobuf:"varint,1,opt,name=account_ver,json=accountVer,proto3" json:"account_ver,omitempty"`
+}
+
+func (m *AccountVersion) Reset()         { *m = AccountVersion{} }
+func (m *AccountVersion) String() string { return proto.CompactTextString(m) }
+func (*AccountVersion) ProtoMessage()    {}
+func (*AccountVersion) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8e28828dcb8d24f0, []int{16}
+}
+func (m *AccountVersion) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AccountVersion) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AccountVersion.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AccountVersion) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccountVersion.Merge(m, src)
+}
+func (m *AccountVersion) XXX_Size() int {
+	return m.Size()
+}
+func (m *AccountVersion) XXX_DiscardUnknown() {
+	xxx_messageInfo_AccountVersion.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AccountVersion proto.InternalMessageInfo
+
+func (m *AccountVersion) GetAccountVer() int32 {
+	if m != nil {
+		return m.AccountVer
+	}
+	return 0
+}
+
 func init() {
-	proto.RegisterType((*Account)(nil), "account.Account")
-	proto.RegisterType((*UpdatePasswordRequest)(nil), "account.UpdatePasswordRequest")
-	proto.RegisterType((*VerifyPasswordRequest)(nil), "account.VerifyPasswordRequest")
-	proto.RegisterType((*AccountList)(nil), "account.AccountList")
-	proto.RegisterType((*GetAccountListRequest)(nil), "account.GetAccountListRequest")
-	proto.RegisterType((*CreateAccountRequest)(nil), "account.CreateAccountRequest")
-	proto.RegisterType((*GetAccountRequest)(nil), "account.GetAccountRequest")
-	proto.RegisterType((*GetAccountByPhonenumberRequest)(nil), "account.GetAccountByPhonenumberRequest")
-	proto.RegisterType((*PasswordResetRequest)(nil), "account.PasswordResetRequest")
-	proto.RegisterType((*EmailChangeRequest)(nil), "account.EmailChangeRequest")
-	proto.RegisterType((*EmailConfirmation)(nil), "account.EmailConfirmation")
-	proto.RegisterType((*GetOrCreateRequest)(nil), "account.GetOrCreateRequest")
-	proto.RegisterType((*TrackEventRequest)(nil), "account.TrackEventRequest")
-	proto.RegisterType((*SyncUserRequest)(nil), "account.SyncUserRequest")
+	proto.RegisterType((*Account)(nil), "staffjoy.account.Account")
+	proto.RegisterType((*UpdatePasswordRequest)(nil), "staffjoy.account.UpdatePasswordRequest")
+	proto.RegisterType((*VerifyPasswordRequest)(nil), "staffjoy.account.VerifyPasswordRequest")
+	proto.RegisterType((*AccountList)(nil), "staffjoy.account.AccountList")
+	proto.RegisterType((*GetAccountListRequest)(nil), "staffjoy.account.GetAccountListRequest")
+	proto.RegisterType((*CreateAccountRequest)(nil), "staffjoy.account.CreateAccountRequest")
+	proto.RegisterType((*GetAccountRequest)(nil), "staffjoy.account.GetAccountRequest")
+	proto.RegisterType((*GetAccountByPhonenumberRequest)(nil), "staffjoy.account.GetAccountByPhonenumberRequest")
+	proto.RegisterType((*PasswordResetRequest)(nil), "staffjoy.account.PasswordResetRequest")
+	proto.RegisterType((*EmailChangeRequest)(nil), "staffjoy.account.EmailChangeRequest")
+	proto.RegisterType((*EmailConfirmation)(nil), "staffjoy.account.EmailConfirmation")
+	proto.RegisterType((*GetOrCreateRequest)(nil), "staffjoy.account.GetOrCreateRequest")
+	proto.RegisterType((*TrackEventRequest)(nil), "staffjoy.account.TrackEventRequest")
+	proto.RegisterType((*SyncUserRequest)(nil), "staffjoy.account.SyncUserRequest")
+	proto.RegisterType((*RowsOfAccount)(nil), "staffjoy.account.RowsOfAccount")
+	proto.RegisterType((*GetAccountVersionRequest)(nil), "staffjoy.account.GetAccountVersionRequest")
+	proto.RegisterType((*AccountVersion)(nil), "staffjoy.account.AccountVersion")
 }
 
 func init() { proto.RegisterFile("account.proto", fileDescriptor_8e28828dcb8d24f0) }
 
 var fileDescriptor_8e28828dcb8d24f0 = []byte{
-	// 976 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0xdd, 0x6e, 0xe2, 0xc6,
-	0x17, 0xc7, 0xf9, 0x20, 0xe4, 0x90, 0xe5, 0x1f, 0xe6, 0x4f, 0x36, 0xae, 0xb3, 0xc1, 0xec, 0xa8,
-	0x55, 0xa2, 0x55, 0x0b, 0x5a, 0x2a, 0xf5, 0x62, 0xa5, 0x5d, 0x29, 0xa4, 0x28, 0xaa, 0xba, 0x52,
-	0x22, 0x67, 0xb3, 0x17, 0x55, 0xa5, 0xd4, 0xc0, 0x40, 0xdc, 0x62, 0x8f, 0xd7, 0x1e, 0x53, 0xa1,
-	0xaa, 0x37, 0x7d, 0x82, 0x48, 0x7d, 0x9a, 0xbe, 0xc1, 0x5e, 0xae, 0xd4, 0x9b, 0x5e, 0xd1, 0x2a,
-	0xe9, 0x13, 0xf0, 0x04, 0xd5, 0x8c, 0xc7, 0xc6, 0xc0, 0x04, 0xa9, 0x17, 0xbd, 0xf3, 0x39, 0xe7,
-	0x77, 0x7e, 0xe7, 0xcc, 0xf9, 0x02, 0x78, 0x64, 0x77, 0xbb, 0x34, 0xf2, 0x58, 0xdd, 0x0f, 0x28,
-	0xa3, 0x68, 0x4b, 0x8a, 0xc6, 0x93, 0x01, 0xa5, 0x83, 0x21, 0x69, 0xd8, 0xbe, 0xd3, 0xb0, 0x3d,
-	0x8f, 0x32, 0x9b, 0x39, 0xd4, 0x0b, 0x63, 0x98, 0x61, 0x4a, 0xab, 0x90, 0x3a, 0x51, 0xbf, 0xc1,
-	0x1c, 0x97, 0x84, 0xcc, 0x76, 0x7d, 0x09, 0x38, 0x58, 0x04, 0x10, 0xd7, 0x67, 0x63, 0x69, 0xfc,
-	0x6c, 0xe0, 0xb0, 0x9b, 0xa8, 0x53, 0xef, 0x52, 0xb7, 0x31, 0xa0, 0x03, 0x3a, 0x43, 0x71, 0x49,
-	0x08, 0xe2, 0x2b, 0x86, 0xe3, 0xdf, 0xd6, 0x61, 0xeb, 0x24, 0x4e, 0x0b, 0x3d, 0x85, 0x8d, 0x28,
-	0x72, 0x7a, 0xba, 0x56, 0xd3, 0x8e, 0xb7, 0x5b, 0x8f, 0xa6, 0x13, 0x73, 0xbb, 0xd7, 0x79, 0x81,
-	0xb9, 0x0e, 0x5b, 0xc2, 0xc4, 0x21, 0x9e, 0xed, 0x12, 0x7d, 0x6d, 0x1e, 0xc2, 0x75, 0xd8, 0x12,
-	0x26, 0xf4, 0x31, 0x6c, 0x12, 0xd7, 0x76, 0x86, 0xfa, 0xba, 0xc0, 0x94, 0xa6, 0x13, 0x13, 0x38,
-	0x46, 0x28, 0xb1, 0x15, 0x1b, 0xd1, 0x39, 0x54, 0xba, 0xd4, 0xeb, 0x3b, 0x81, 0x4b, 0x7a, 0xd7,
-	0xb6, 0xd7, 0xbb, 0xb6, 0xbb, 0xcc, 0x19, 0x11, 0x7d, 0xa3, 0xa6, 0x1d, 0x17, 0x5a, 0x87, 0xd3,
-	0x89, 0xf9, 0x11, 0x77, 0x52, 0x61, 0xb0, 0x85, 0x52, 0xf5, 0x89, 0xd7, 0x3b, 0x11, 0x4a, 0xf4,
-	0x2d, 0xec, 0xb8, 0xc4, 0xed, 0x90, 0xe0, 0x3a, 0x74, 0xbc, 0x2e, 0xd1, 0x37, 0x6b, 0xda, 0x71,
-	0xb1, 0x69, 0xd4, 0xe3, 0x5a, 0xd5, 0x93, 0x2a, 0xd4, 0xdf, 0x24, 0xc5, 0x6c, 0x1d, 0xbe, 0x9f,
-	0x98, 0xb9, 0xe9, 0xc4, 0x2c, 0xf3, 0x40, 0x59, 0x5f, 0x7c, 0xfb, 0xa7, 0xa9, 0x59, 0xc5, 0x58,
-	0x75, 0xc9, 0x35, 0xe8, 0x19, 0x6c, 0x85, 0x91, 0xef, 0xd3, 0x80, 0xe9, 0x79, 0x91, 0xe1, 0xee,
-	0x74, 0x62, 0xee, 0x70, 0x47, 0xa9, 0xc6, 0x56, 0x02, 0x40, 0x5f, 0x40, 0xd1, 0xbf, 0xa1, 0x1e,
-	0xf1, 0x22, 0xee, 0xaf, 0x6f, 0x89, 0x32, 0x54, 0xa6, 0x13, 0x73, 0x97, 0xe3, 0x33, 0x26, 0x6c,
-	0x65, 0x81, 0xa8, 0x01, 0xdb, 0xfe, 0x0d, 0x65, 0xf4, 0x3a, 0x0a, 0x86, 0x7a, 0x41, 0x78, 0xa1,
-	0xe9, 0xc4, 0x2c, 0x49, 0xaf, 0xd8, 0x80, 0xad, 0x82, 0xf8, 0xbe, 0x0a, 0x86, 0xf8, 0x0c, 0xf6,
-	0xae, 0xfc, 0x9e, 0xcd, 0xc8, 0x85, 0x1d, 0x86, 0x3f, 0xd2, 0xa0, 0x67, 0x91, 0x77, 0x11, 0x09,
-	0x19, 0x42, 0xd9, 0x46, 0xca, 0xce, 0x19, 0x50, 0xf0, 0x25, 0x2c, 0xee, 0x9e, 0x95, 0xca, 0xf8,
-	0x2b, 0xd8, 0x7b, 0x4b, 0x02, 0xa7, 0x3f, 0x5e, 0x24, 0xaa, 0x24, 0xbd, 0x8c, 0x99, 0x64, 0xef,
-	0x56, 0x51, 0x51, 0x28, 0xca, 0x71, 0x7a, 0xed, 0x84, 0x0c, 0x35, 0xa1, 0x20, 0x87, 0x3e, 0xd4,
-	0xb5, 0xda, 0xfa, 0x71, 0xb1, 0xb9, 0x5b, 0x4f, 0x96, 0x42, 0xe2, 0x5a, 0x1b, 0xbc, 0x0f, 0x56,
-	0x8a, 0xe3, 0x41, 0x87, 0x8e, 0xeb, 0x30, 0xc1, 0xbd, 0x69, 0xc5, 0x02, 0x7a, 0x0c, 0x79, 0xda,
-	0xef, 0x87, 0x84, 0x89, 0xb9, 0xda, 0xb4, 0xa4, 0x84, 0xdb, 0xb0, 0x77, 0x46, 0x58, 0x26, 0x66,
-	0x92, 0xfb, 0xcc, 0x41, 0xcb, 0x3a, 0xa8, 0xe9, 0x71, 0x07, 0x2a, 0xa7, 0x01, 0xb1, 0x19, 0x91,
-	0x4c, 0x99, 0x52, 0x8a, 0x81, 0x97, 0xa5, 0x14, 0x13, 0x9e, 0x56, 0x65, 0x2d, 0x5b, 0x95, 0xda,
-	0x7c, 0xdb, 0xc5, 0xf4, 0xcf, 0x35, 0x18, 0x1f, 0x41, 0x79, 0x96, 0xea, 0x8a, 0x5e, 0xe1, 0x16,
-	0x54, 0x67, 0xc0, 0xd6, 0xf8, 0x62, 0xc6, 0x91, 0x78, 0x2d, 0x04, 0xd3, 0x96, 0x83, 0x7d, 0x0a,
-	0x95, 0x59, 0x37, 0x43, 0xc2, 0x56, 0xb6, 0x14, 0xbf, 0x02, 0xd4, 0xe6, 0x1f, 0xa7, 0x37, 0xb6,
-	0x37, 0x20, 0xab, 0xe6, 0x48, 0xf9, 0x78, 0xfc, 0x12, 0xca, 0xb1, 0x7f, 0xbc, 0x98, 0xe2, 0x9e,
-	0xfd, 0x0b, 0xf7, 0xef, 0x00, 0x9d, 0x11, 0x76, 0x1e, 0xc4, 0x2d, 0xf8, 0x2f, 0x6a, 0xff, 0x12,
-	0xca, 0x6f, 0x02, 0xbb, 0xfb, 0x43, 0x7b, 0x44, 0x56, 0xd6, 0x5e, 0x04, 0xe0, 0x98, 0x34, 0x00,
-	0x17, 0xf0, 0x27, 0xf0, 0xbf, 0xcb, 0xb1, 0xd7, 0xbd, 0x0a, 0x67, 0x2d, 0x50, 0x38, 0x37, 0x6f,
-	0x0b, 0x50, 0x92, 0x6d, 0xbb, 0x24, 0xc1, 0xc8, 0xe9, 0x12, 0x64, 0x41, 0x3e, 0x7e, 0x15, 0x3a,
-	0x4c, 0x27, 0x5f, 0x35, 0x69, 0xc6, 0xd2, 0x62, 0xe0, 0xfd, 0x5f, 0x7e, 0xff, 0xfb, 0xd7, 0xb5,
-	0x32, 0xde, 0x69, 0x8c, 0x9e, 0x37, 0x92, 0xf5, 0x78, 0xa1, 0x3d, 0x43, 0x16, 0x6c, 0x88, 0xed,
-	0xaa, 0xa6, 0x2e, 0xca, 0x15, 0x30, 0x2a, 0x8b, 0x94, 0xdc, 0x88, 0x2b, 0x82, 0xb6, 0x84, 0xe6,
-	0x68, 0xd1, 0x05, 0xac, 0x9f, 0x11, 0x86, 0x0c, 0x05, 0xe5, 0xc3, 0x19, 0x1e, 0x08, 0xaa, 0x3d,
-	0xf4, 0xff, 0x2c, 0x55, 0xe3, 0x27, 0x5e, 0x8b, 0x9f, 0xd1, 0x6b, 0xc8, 0xc7, 0xe7, 0x09, 0x2d,
-	0x39, 0x2a, 0xa8, 0xaa, 0x82, 0x4a, 0x37, 0x54, 0x54, 0xfc, 0xcd, 0xef, 0xa0, 0x34, 0x7f, 0xec,
-	0x32, 0xaf, 0x57, 0x5e, 0x41, 0xe3, 0xf1, 0xd2, 0xed, 0x6f, 0xf3, 0xdf, 0x49, 0x7c, 0x24, 0x22,
-	0x3d, 0x35, 0x9e, 0x28, 0x22, 0x35, 0x92, 0x43, 0xc6, 0x43, 0x9e, 0x43, 0x45, 0x72, 0xcd, 0x6d,
-	0x52, 0xa6, 0x91, 0xaa, 0x0d, 0x7b, 0x30, 0x6e, 0x0e, 0x7d, 0x0d, 0x48, 0x82, 0x32, 0xcb, 0x86,
-	0x0e, 0x52, 0xba, 0xe5, 0x15, 0x5c, 0x41, 0xf6, 0x25, 0x94, 0xe6, 0x8f, 0x76, 0xa6, 0x20, 0xca,
-	0x6b, 0xae, 0x28, 0x7a, 0x0e, 0x9d, 0x42, 0x31, 0x0e, 0xd8, 0x8e, 0x4f, 0xfb, 0x42, 0x2e, 0x99,
-	0x75, 0x5e, 0x91, 0xca, 0x2b, 0x28, 0x66, 0xd6, 0x37, 0xf3, 0xa0, 0xe5, 0xa5, 0x56, 0x26, 0xf1,
-	0x16, 0xf6, 0x1f, 0xb8, 0x77, 0xe8, 0x48, 0x31, 0x8f, 0xaa, 0x8b, 0xa8, 0xe4, 0x6d, 0x01, 0xcc,
-	0x96, 0x3e, 0xf3, 0xb6, 0xa5, 0x4b, 0xb0, 0xf2, 0x6d, 0x85, 0x64, 0xf3, 0x91, 0x9e, 0x32, 0x2c,
-	0x1c, 0x83, 0x87, 0xfd, 0x5b, 0xcf, 0xdf, 0xdf, 0x55, 0xb5, 0x0f, 0x77, 0x55, 0xed, 0xaf, 0xbb,
-	0xaa, 0x76, 0x7b, 0x5f, 0xcd, 0x7d, 0xb8, 0xaf, 0xe6, 0xfe, 0xb8, 0xaf, 0xe6, 0xbe, 0xd9, 0x1f,
-	0x35, 0xeb, 0x21, 0xb3, 0xfb, 0xfd, 0xef, 0xe9, 0x58, 0xfc, 0x5d, 0x93, 0xe4, 0x9d, 0xbc, 0x20,
-	0xf9, 0xfc, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xb7, 0x4f, 0x98, 0x31, 0x3f, 0x0a, 0x00, 0x00,
+	// 1076 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0xdd, 0x6e, 0xe3, 0x44,
+	0x14, 0x8e, 0xdb, 0xa6, 0x4d, 0x4f, 0xda, 0x6e, 0x3b, 0xa4, 0x5b, 0x6f, 0xd8, 0xc6, 0xe9, 0xec,
+	0x42, 0xab, 0x0a, 0x39, 0xb4, 0x8b, 0xb8, 0x58, 0xb4, 0x88, 0x66, 0x55, 0x45, 0x88, 0x95, 0x5a,
+	0xb9, 0x3f, 0x42, 0x08, 0x28, 0x4e, 0x32, 0x49, 0x0d, 0xb5, 0xc7, 0xd8, 0x93, 0x94, 0x82, 0xb8,
+	0xe1, 0x09, 0x56, 0xe2, 0xa5, 0xf6, 0x72, 0xa5, 0xbd, 0x81, 0x9b, 0x80, 0x5a, 0x9e, 0x20, 0x4f,
+	0x80, 0x66, 0x3c, 0x8e, 0x9d, 0xd8, 0xb1, 0x96, 0x0b, 0xee, 0x3c, 0x67, 0xbe, 0xf3, 0x33, 0xe7,
+	0x9b, 0xf3, 0x8d, 0x61, 0xd9, 0x6c, 0xb5, 0x68, 0xcf, 0x61, 0xba, 0xeb, 0x51, 0x46, 0xd1, 0xaa,
+	0xcf, 0xcc, 0x4e, 0xe7, 0x7b, 0x7a, 0xa3, 0x4b, 0x7b, 0xf9, 0x61, 0x97, 0xd2, 0xee, 0x15, 0xa9,
+	0x99, 0xae, 0x55, 0x33, 0x1d, 0x87, 0x32, 0x93, 0x59, 0xd4, 0xf1, 0x03, 0x7c, 0x59, 0x93, 0xbb,
+	0x62, 0xd5, 0xec, 0x75, 0x6a, 0xcc, 0xb2, 0x89, 0xcf, 0x4c, 0xdb, 0x95, 0x80, 0x77, 0x27, 0x01,
+	0xc4, 0x76, 0xd9, 0x8d, 0xdc, 0xfc, 0xa8, 0x6b, 0xb1, 0xcb, 0x5e, 0x53, 0x6f, 0x51, 0xbb, 0xd6,
+	0xa5, 0x5d, 0x3a, 0x42, 0x7d, 0xd6, 0xdf, 0xd3, 0x9f, 0xe8, 0x7b, 0xc2, 0x28, 0x6c, 0xe2, 0x2b,
+	0xf0, 0xc2, 0x6f, 0x66, 0x61, 0xe1, 0x20, 0xa8, 0x0e, 0x6d, 0xc1, 0x5c, 0xaf, 0x67, 0xb5, 0x55,
+	0xa5, 0xaa, 0xec, 0x2c, 0xd6, 0x97, 0x87, 0x03, 0x6d, 0xb1, 0xdd, 0x7c, 0x8a, 0xb9, 0x0d, 0x1b,
+	0x62, 0x8b, 0x43, 0x1c, 0xd3, 0x26, 0xea, 0xcc, 0x38, 0x84, 0xdb, 0xb0, 0x21, 0xb6, 0xd0, 0x63,
+	0xc8, 0x13, 0xdb, 0xb4, 0xae, 0xd4, 0x59, 0x81, 0x59, 0x19, 0x0e, 0x34, 0xe0, 0x18, 0x61, 0xc4,
+	0x46, 0xb0, 0x89, 0x8e, 0xa0, 0xd4, 0xa2, 0x4e, 0xc7, 0xf2, 0x6c, 0xd2, 0xbe, 0x30, 0x9d, 0xf6,
+	0x85, 0xd9, 0x62, 0x56, 0x9f, 0xa8, 0x73, 0x55, 0x65, 0xa7, 0x50, 0xdf, 0x1c, 0x0e, 0xb4, 0x07,
+	0xdc, 0x29, 0x0d, 0x83, 0x0d, 0x34, 0x32, 0x1f, 0x38, 0xed, 0x03, 0x61, 0x44, 0x5f, 0xc3, 0x92,
+	0x4d, 0xec, 0x26, 0xf1, 0x2e, 0x7c, 0xcb, 0x69, 0x11, 0x35, 0x5f, 0x55, 0x76, 0x8a, 0xfb, 0x65,
+	0x3d, 0x68, 0x99, 0x1e, 0x36, 0x43, 0x3f, 0x0d, 0x7b, 0x5a, 0xdf, 0x7c, 0x35, 0xd0, 0x72, 0xc3,
+	0x81, 0xb6, 0xc6, 0x13, 0xc5, 0x7d, 0xf1, 0xcb, 0xbf, 0x34, 0xc5, 0x28, 0x06, 0xa6, 0x13, 0x6e,
+	0x41, 0xbb, 0xb0, 0xe0, 0xf7, 0x5c, 0x97, 0x7a, 0x4c, 0x9d, 0x17, 0x15, 0xae, 0x0e, 0x07, 0xda,
+	0x12, 0x77, 0x94, 0x66, 0x6c, 0x84, 0x00, 0xf4, 0x31, 0x14, 0xdd, 0x4b, 0xea, 0x10, 0xa7, 0xc7,
+	0xfd, 0xd5, 0x05, 0xd1, 0x86, 0xd2, 0x70, 0xa0, 0xad, 0x72, 0x7c, 0x6c, 0x0b, 0x1b, 0x71, 0x20,
+	0xaa, 0xc1, 0xa2, 0x7b, 0x49, 0x19, 0xbd, 0xe8, 0x79, 0x57, 0x6a, 0x41, 0x78, 0xa1, 0xe1, 0x40,
+	0x5b, 0x91, 0x5e, 0xc1, 0x06, 0x36, 0x0a, 0xe2, 0xfb, 0xcc, 0xbb, 0x42, 0x2a, 0x2c, 0xf4, 0x89,
+	0xe7, 0x5b, 0xd4, 0x51, 0x17, 0xab, 0xca, 0x4e, 0xde, 0x08, 0x97, 0xb8, 0x01, 0xeb, 0x67, 0x6e,
+	0xdb, 0x64, 0xe4, 0xd8, 0xf4, 0xfd, 0x6b, 0xea, 0xb5, 0x0d, 0xf2, 0x63, 0x8f, 0xf8, 0x0c, 0xa1,
+	0x38, 0xc5, 0x92, 0xd3, 0x32, 0x14, 0x5c, 0x09, 0x0b, 0x78, 0x35, 0x46, 0x6b, 0xfc, 0x39, 0xac,
+	0x9f, 0x13, 0xcf, 0xea, 0xdc, 0x4c, 0x06, 0x2a, 0x85, 0x2c, 0x07, 0x91, 0x24, 0xab, 0x59, 0xa1,
+	0x7e, 0x82, 0xa2, 0xbc, 0x68, 0x2f, 0x2c, 0x9f, 0xa1, 0x4f, 0xa0, 0x20, 0xa7, 0xc2, 0x57, 0x95,
+	0xea, 0xec, 0x4e, 0x71, 0xff, 0x81, 0x3e, 0x39, 0x2f, 0xba, 0x74, 0xa8, 0xcf, 0x71, 0xaa, 0x8c,
+	0x91, 0x03, 0xcf, 0x7e, 0x65, 0xd9, 0x16, 0x13, 0x49, 0xf2, 0x46, 0xb0, 0x40, 0xf7, 0x61, 0x9e,
+	0x76, 0x3a, 0x3e, 0x61, 0xe2, 0xea, 0xe5, 0x0d, 0xb9, 0xc2, 0x87, 0xb0, 0xde, 0x20, 0x2c, 0x96,
+	0x3c, 0x3c, 0x44, 0xe4, 0xa0, 0xc4, 0x1d, 0xd2, 0xc3, 0xe3, 0x26, 0x94, 0x9e, 0x7b, 0xc4, 0x64,
+	0x44, 0x46, 0x8a, 0xf5, 0x54, 0xcc, 0x84, 0xec, 0xa9, 0x18, 0x82, 0x51, 0x7b, 0x66, 0xe2, 0xed,
+	0xa9, 0x8e, 0xdf, 0x0c, 0x31, 0x20, 0x63, 0x77, 0x00, 0x6f, 0xc3, 0x5a, 0x54, 0x6a, 0x06, 0x69,
+	0xb8, 0x0e, 0x95, 0x08, 0x58, 0xbf, 0x39, 0x8e, 0x62, 0x84, 0x5e, 0x13, 0xc9, 0x94, 0x64, 0xb2,
+	0x0f, 0xa0, 0x14, 0xd1, 0xea, 0x13, 0x96, 0xc9, 0x2d, 0xfe, 0x14, 0xd0, 0x21, 0xff, 0x78, 0x7e,
+	0x69, 0x3a, 0x5d, 0x92, 0x75, 0xa1, 0x52, 0x0f, 0x8f, 0x9f, 0xc1, 0x5a, 0xe0, 0x1f, 0xcc, 0xae,
+	0x50, 0xbe, 0xff, 0xe0, 0xfe, 0x1d, 0xa0, 0x06, 0x61, 0x47, 0x5e, 0x40, 0xc1, 0xff, 0xd1, 0xfb,
+	0x67, 0xb0, 0x76, 0xea, 0x99, 0xad, 0x1f, 0x0e, 0xfb, 0x24, 0xb3, 0xf7, 0x22, 0x01, 0xc7, 0x8c,
+	0x12, 0xf0, 0x05, 0x7e, 0x0f, 0xee, 0x9d, 0xdc, 0x38, 0xad, 0x33, 0x3f, 0xa2, 0x20, 0x8d, 0xb8,
+	0x47, 0xb0, 0x6c, 0xd0, 0x6b, 0xff, 0xa8, 0x13, 0xaa, 0x6e, 0x04, 0x9a, 0x1d, 0x81, 0x74, 0x50,
+	0x23, 0x76, 0xcf, 0x83, 0xa1, 0xce, 0x0a, 0xba, 0x07, 0x2b, 0xe3, 0x60, 0xa4, 0x41, 0x51, 0x4e,
+	0xcb, 0x45, 0x5f, 0xb2, 0x9f, 0x37, 0xc0, 0x1c, 0x81, 0xf6, 0xff, 0x84, 0x91, 0xcf, 0x09, 0xf1,
+	0xfa, 0x56, 0x8b, 0xa0, 0x36, 0xcc, 0x07, 0xdd, 0x45, 0xef, 0x27, 0x47, 0x31, 0xed, 0xea, 0x97,
+	0xa7, 0x8f, 0x2c, 0xde, 0xf8, 0xed, 0xcd, 0x3f, 0xbf, 0xcf, 0xac, 0xe1, 0xa5, 0x5a, 0x7f, 0xaf,
+	0x16, 0x0e, 0xee, 0x53, 0x65, 0x17, 0x1d, 0xc3, 0x9c, 0x10, 0x80, 0xed, 0xa4, 0x6f, 0xea, 0x94,
+	0x96, 0x37, 0xa7, 0x26, 0xe1, 0x28, 0x9c, 0x43, 0x0d, 0x98, 0x6d, 0x10, 0x86, 0x1e, 0x65, 0x05,
+	0x7c, 0x8b, 0x8a, 0x73, 0xe8, 0x5b, 0x98, 0x0f, 0x64, 0x13, 0x4d, 0x87, 0x65, 0x45, 0xa8, 0x88,
+	0x33, 0xab, 0xe5, 0x77, 0xe2, 0x67, 0xae, 0xfd, 0xc2, 0x29, 0xfa, 0x95, 0x1f, 0xfd, 0x67, 0x58,
+	0x19, 0x97, 0xe5, 0xb4, 0x26, 0xa4, 0x0a, 0x77, 0xf9, 0x7e, 0xe2, 0x21, 0x3b, 0xe4, 0x6f, 0x3f,
+	0xde, 0x16, 0x29, 0xb7, 0xca, 0x0f, 0x53, 0x52, 0xd6, 0x42, 0xed, 0xe5, 0xb9, 0xbf, 0x84, 0x92,
+	0x8c, 0x35, 0x36, 0xf3, 0x69, 0x54, 0xa7, 0x89, 0xc2, 0xd4, 0x02, 0x72, 0xe8, 0x14, 0x90, 0x04,
+	0xc5, 0xf4, 0x01, 0x3d, 0x4e, 0xc6, 0x4d, 0xca, 0x47, 0x46, 0xd4, 0x73, 0x58, 0x19, 0x7f, 0x79,
+	0xd2, 0x7a, 0x95, 0xfa, 0x36, 0x65, 0x73, 0xfc, 0x02, 0x8a, 0x41, 0x09, 0xa2, 0x9a, 0xb4, 0x4b,
+	0x93, 0x50, 0xa9, 0x8c, 0x2a, 0x8f, 0xa1, 0x18, 0x53, 0xa5, 0xb4, 0x43, 0x27, 0x45, 0x2b, 0xbb,
+	0xbe, 0x4b, 0xd8, 0x98, 0x22, 0xec, 0xe8, 0xc3, 0xac, 0x0b, 0x9e, 0xf6, 0x06, 0x64, 0x67, 0xfa,
+	0x02, 0x20, 0xd2, 0xbb, 0xb4, 0x46, 0x24, 0xd4, 0x30, 0xa3, 0x11, 0x0d, 0x28, 0x84, 0xea, 0x87,
+	0xb6, 0x92, 0xa1, 0x26, 0x94, 0x31, 0x23, 0xd0, 0x37, 0x70, 0x8f, 0x8f, 0x75, 0x38, 0xb6, 0xf4,
+	0xda, 0x7f, 0x7b, 0xa5, 0xd0, 0x92, 0xc0, 0x31, 0xad, 0xc5, 0x39, 0xd4, 0x8a, 0x3f, 0xb0, 0xa1,
+	0x58, 0xee, 0x66, 0x25, 0x18, 0x97, 0xdf, 0x72, 0x75, 0x6a, 0x4b, 0x25, 0x10, 0xe7, 0xea, 0x7b,
+	0xaf, 0x6e, 0x2b, 0xca, 0xeb, 0xdb, 0x8a, 0xf2, 0xf7, 0x6d, 0x45, 0x79, 0x79, 0x57, 0xc9, 0xbd,
+	0xbe, 0xab, 0xe4, 0xfe, 0xb8, 0xab, 0xe4, 0xbe, 0xda, 0xe8, 0xef, 0x47, 0xfe, 0xfc, 0x4f, 0x5d,
+	0xc6, 0x68, 0xce, 0x8b, 0x46, 0x3c, 0xf9, 0x37, 0x00, 0x00, 0xff, 0xff, 0xac, 0xf3, 0x1c, 0xf0,
+	0x43, 0x0c, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -910,6 +1060,8 @@ type AccountServiceClient interface {
 	GetAccountByPhonenumber(ctx context.Context, in *GetAccountByPhonenumberRequest, opts ...grpc.CallOption) (*Account, error)
 	TrackEvent(ctx context.Context, in *TrackEventRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	SyncUser(ctx context.Context, in *SyncUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ListAccountRows(ctx context.Context, in *GetAccountListRequest, opts ...grpc.CallOption) (*RowsOfAccount, error)
+	GetAccountVersion(ctx context.Context, in *GetAccountVersionRequest, opts ...grpc.CallOption) (*AccountVersion, error)
 }
 
 type accountServiceClient struct {
@@ -922,7 +1074,7 @@ func NewAccountServiceClient(cc *grpc.ClientConn) AccountServiceClient {
 
 func (c *accountServiceClient) Create(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*Account, error) {
 	out := new(Account)
-	err := c.cc.Invoke(ctx, "/account.AccountService/Create", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/Create", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -931,7 +1083,7 @@ func (c *accountServiceClient) Create(ctx context.Context, in *CreateAccountRequ
 
 func (c *accountServiceClient) List(ctx context.Context, in *GetAccountListRequest, opts ...grpc.CallOption) (*AccountList, error) {
 	out := new(AccountList)
-	err := c.cc.Invoke(ctx, "/account.AccountService/List", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/List", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -940,7 +1092,7 @@ func (c *accountServiceClient) List(ctx context.Context, in *GetAccountListReque
 
 func (c *accountServiceClient) Get(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*Account, error) {
 	out := new(Account)
-	err := c.cc.Invoke(ctx, "/account.AccountService/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -949,7 +1101,7 @@ func (c *accountServiceClient) Get(ctx context.Context, in *GetAccountRequest, o
 
 func (c *accountServiceClient) Update(ctx context.Context, in *Account, opts ...grpc.CallOption) (*Account, error) {
 	out := new(Account)
-	err := c.cc.Invoke(ctx, "/account.AccountService/Update", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -958,7 +1110,7 @@ func (c *accountServiceClient) Update(ctx context.Context, in *Account, opts ...
 
 func (c *accountServiceClient) UpdatePassword(ctx context.Context, in *UpdatePasswordRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/account.AccountService/UpdatePassword", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/UpdatePassword", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -967,7 +1119,7 @@ func (c *accountServiceClient) UpdatePassword(ctx context.Context, in *UpdatePas
 
 func (c *accountServiceClient) RequestPasswordReset(ctx context.Context, in *PasswordResetRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/account.AccountService/RequestPasswordReset", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/RequestPasswordReset", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -976,7 +1128,7 @@ func (c *accountServiceClient) RequestPasswordReset(ctx context.Context, in *Pas
 
 func (c *accountServiceClient) RequestEmailChange(ctx context.Context, in *EmailChangeRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/account.AccountService/RequestEmailChange", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/RequestEmailChange", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -985,7 +1137,7 @@ func (c *accountServiceClient) RequestEmailChange(ctx context.Context, in *Email
 
 func (c *accountServiceClient) VerifyPassword(ctx context.Context, in *VerifyPasswordRequest, opts ...grpc.CallOption) (*Account, error) {
 	out := new(Account)
-	err := c.cc.Invoke(ctx, "/account.AccountService/VerifyPassword", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/VerifyPassword", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -994,7 +1146,7 @@ func (c *accountServiceClient) VerifyPassword(ctx context.Context, in *VerifyPas
 
 func (c *accountServiceClient) ChangeEmail(ctx context.Context, in *EmailConfirmation, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/account.AccountService/ChangeEmail", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/ChangeEmail", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1003,7 +1155,7 @@ func (c *accountServiceClient) ChangeEmail(ctx context.Context, in *EmailConfirm
 
 func (c *accountServiceClient) GetOrCreate(ctx context.Context, in *GetOrCreateRequest, opts ...grpc.CallOption) (*Account, error) {
 	out := new(Account)
-	err := c.cc.Invoke(ctx, "/account.AccountService/GetOrCreate", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/GetOrCreate", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1012,7 +1164,7 @@ func (c *accountServiceClient) GetOrCreate(ctx context.Context, in *GetOrCreateR
 
 func (c *accountServiceClient) GetAccountByPhonenumber(ctx context.Context, in *GetAccountByPhonenumberRequest, opts ...grpc.CallOption) (*Account, error) {
 	out := new(Account)
-	err := c.cc.Invoke(ctx, "/account.AccountService/GetAccountByPhonenumber", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/GetAccountByPhonenumber", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1021,7 +1173,7 @@ func (c *accountServiceClient) GetAccountByPhonenumber(ctx context.Context, in *
 
 func (c *accountServiceClient) TrackEvent(ctx context.Context, in *TrackEventRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/account.AccountService/TrackEvent", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/TrackEvent", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1030,7 +1182,25 @@ func (c *accountServiceClient) TrackEvent(ctx context.Context, in *TrackEventReq
 
 func (c *accountServiceClient) SyncUser(ctx context.Context, in *SyncUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/account.AccountService/SyncUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/SyncUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) ListAccountRows(ctx context.Context, in *GetAccountListRequest, opts ...grpc.CallOption) (*RowsOfAccount, error) {
+	out := new(RowsOfAccount)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/ListAccountRows", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *accountServiceClient) GetAccountVersion(ctx context.Context, in *GetAccountVersionRequest, opts ...grpc.CallOption) (*AccountVersion, error) {
+	out := new(AccountVersion)
+	err := c.cc.Invoke(ctx, "/staffjoy.account.AccountService/GetAccountVersion", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1052,6 +1222,8 @@ type AccountServiceServer interface {
 	GetAccountByPhonenumber(context.Context, *GetAccountByPhonenumberRequest) (*Account, error)
 	TrackEvent(context.Context, *TrackEventRequest) (*emptypb.Empty, error)
 	SyncUser(context.Context, *SyncUserRequest) (*emptypb.Empty, error)
+	ListAccountRows(context.Context, *GetAccountListRequest) (*RowsOfAccount, error)
+	GetAccountVersion(context.Context, *GetAccountVersionRequest) (*AccountVersion, error)
 }
 
 // UnimplementedAccountServiceServer can be embedded to have forward compatible implementations.
@@ -1097,6 +1269,12 @@ func (*UnimplementedAccountServiceServer) TrackEvent(ctx context.Context, req *T
 func (*UnimplementedAccountServiceServer) SyncUser(ctx context.Context, req *SyncUserRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SyncUser not implemented")
 }
+func (*UnimplementedAccountServiceServer) ListAccountRows(ctx context.Context, req *GetAccountListRequest) (*RowsOfAccount, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAccountRows not implemented")
+}
+func (*UnimplementedAccountServiceServer) GetAccountVersion(ctx context.Context, req *GetAccountVersionRequest) (*AccountVersion, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccountVersion not implemented")
+}
 
 func RegisterAccountServiceServer(s *grpc.Server, srv AccountServiceServer) {
 	s.RegisterService(&_AccountService_serviceDesc, srv)
@@ -1112,7 +1290,7 @@ func _AccountService_Create_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/Create",
+		FullMethod: "/staffjoy.account.AccountService/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).Create(ctx, req.(*CreateAccountRequest))
@@ -1130,7 +1308,7 @@ func _AccountService_List_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/List",
+		FullMethod: "/staffjoy.account.AccountService/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).List(ctx, req.(*GetAccountListRequest))
@@ -1148,7 +1326,7 @@ func _AccountService_Get_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/Get",
+		FullMethod: "/staffjoy.account.AccountService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).Get(ctx, req.(*GetAccountRequest))
@@ -1166,7 +1344,7 @@ func _AccountService_Update_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/Update",
+		FullMethod: "/staffjoy.account.AccountService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).Update(ctx, req.(*Account))
@@ -1184,7 +1362,7 @@ func _AccountService_UpdatePassword_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/UpdatePassword",
+		FullMethod: "/staffjoy.account.AccountService/UpdatePassword",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).UpdatePassword(ctx, req.(*UpdatePasswordRequest))
@@ -1202,7 +1380,7 @@ func _AccountService_RequestPasswordReset_Handler(srv interface{}, ctx context.C
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/RequestPasswordReset",
+		FullMethod: "/staffjoy.account.AccountService/RequestPasswordReset",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).RequestPasswordReset(ctx, req.(*PasswordResetRequest))
@@ -1220,7 +1398,7 @@ func _AccountService_RequestEmailChange_Handler(srv interface{}, ctx context.Con
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/RequestEmailChange",
+		FullMethod: "/staffjoy.account.AccountService/RequestEmailChange",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).RequestEmailChange(ctx, req.(*EmailChangeRequest))
@@ -1238,7 +1416,7 @@ func _AccountService_VerifyPassword_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/VerifyPassword",
+		FullMethod: "/staffjoy.account.AccountService/VerifyPassword",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).VerifyPassword(ctx, req.(*VerifyPasswordRequest))
@@ -1256,7 +1434,7 @@ func _AccountService_ChangeEmail_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/ChangeEmail",
+		FullMethod: "/staffjoy.account.AccountService/ChangeEmail",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).ChangeEmail(ctx, req.(*EmailConfirmation))
@@ -1274,7 +1452,7 @@ func _AccountService_GetOrCreate_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/GetOrCreate",
+		FullMethod: "/staffjoy.account.AccountService/GetOrCreate",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).GetOrCreate(ctx, req.(*GetOrCreateRequest))
@@ -1292,7 +1470,7 @@ func _AccountService_GetAccountByPhonenumber_Handler(srv interface{}, ctx contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/GetAccountByPhonenumber",
+		FullMethod: "/staffjoy.account.AccountService/GetAccountByPhonenumber",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).GetAccountByPhonenumber(ctx, req.(*GetAccountByPhonenumberRequest))
@@ -1310,7 +1488,7 @@ func _AccountService_TrackEvent_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/TrackEvent",
+		FullMethod: "/staffjoy.account.AccountService/TrackEvent",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).TrackEvent(ctx, req.(*TrackEventRequest))
@@ -1328,7 +1506,7 @@ func _AccountService_SyncUser_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/account.AccountService/SyncUser",
+		FullMethod: "/staffjoy.account.AccountService/SyncUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccountServiceServer).SyncUser(ctx, req.(*SyncUserRequest))
@@ -1336,8 +1514,44 @@ func _AccountService_SyncUser_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_ListAccountRows_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccountListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).ListAccountRows(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/staffjoy.account.AccountService/ListAccountRows",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).ListAccountRows(ctx, req.(*GetAccountListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AccountService_GetAccountVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccountVersionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).GetAccountVersion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/staffjoy.account.AccountService/GetAccountVersion",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).GetAccountVersion(ctx, req.(*GetAccountVersionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _AccountService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "account.AccountService",
+	ServiceName: "staffjoy.account.AccountService",
 	HandlerType: (*AccountServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -1392,6 +1606,14 @@ var _AccountService_serviceDesc = grpc.ServiceDesc{
 			MethodName: "SyncUser",
 			Handler:    _AccountService_SyncUser_Handler,
 		},
+		{
+			MethodName: "ListAccountRows",
+			Handler:    _AccountService_ListAccountRows_Handler,
+		},
+		{
+			MethodName: "GetAccountVersion",
+			Handler:    _AccountService_GetAccountVersion_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "account.proto",
@@ -1417,6 +1639,11 @@ func (m *Account) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Version != 0 {
+		i = encodeVarintAccount(dAtA, i, uint64(m.Version))
+		i--
+		dAtA[i] = 0x48
+	}
 	if len(m.PhotoUrl) > 0 {
 		i -= len(m.PhotoUrl)
 		copy(dAtA[i:], m.PhotoUrl)
@@ -1956,6 +2183,96 @@ func (m *SyncUserRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *RowsOfAccount) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *RowsOfAccount) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RowsOfAccount) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Uuid) > 0 {
+		for iNdEx := len(m.Uuid) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Uuid[iNdEx])
+			copy(dAtA[i:], m.Uuid[iNdEx])
+			i = encodeVarintAccount(dAtA, i, uint64(len(m.Uuid[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *GetAccountVersionRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *GetAccountVersionRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *GetAccountVersionRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Uuid) > 0 {
+		i -= len(m.Uuid)
+		copy(dAtA[i:], m.Uuid)
+		i = encodeVarintAccount(dAtA, i, uint64(len(m.Uuid)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *AccountVersion) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AccountVersion) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AccountVersion) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.AccountVer != 0 {
+		i = encodeVarintAccount(dAtA, i, uint64(m.AccountVer))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintAccount(dAtA []byte, offset int, v uint64) int {
 	offset -= sovAccount(v)
 	base := offset
@@ -2000,6 +2317,9 @@ func (m *Account) Size() (n int) {
 	l = len(m.PhotoUrl)
 	if l > 0 {
 		n += 1 + l + sovAccount(uint64(l))
+	}
+	if m.Version != 0 {
+		n += 1 + sovAccount(uint64(m.Version))
 	}
 	return n
 }
@@ -2215,6 +2535,46 @@ func (m *SyncUserRequest) Size() (n int) {
 	l = len(m.Uuid)
 	if l > 0 {
 		n += 1 + l + sovAccount(uint64(l))
+	}
+	return n
+}
+
+func (m *RowsOfAccount) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Uuid) > 0 {
+		for _, s := range m.Uuid {
+			l = len(s)
+			n += 1 + l + sovAccount(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *GetAccountVersionRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Uuid)
+	if l > 0 {
+		n += 1 + l + sovAccount(uint64(l))
+	}
+	return n
+}
+
+func (m *AccountVersion) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.AccountVer != 0 {
+		n += 1 + sovAccount(uint64(m.AccountVer))
 	}
 	return n
 }
@@ -2487,6 +2847,25 @@ func (m *Account) Unmarshal(dAtA []byte) error {
 			}
 			m.PhotoUrl = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			}
+			m.Version = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAccount
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Version |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipAccount(dAtA[iNdEx:])
@@ -3887,6 +4266,239 @@ func (m *SyncUserRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Uuid = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAccount(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAccount
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *RowsOfAccount) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAccount
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RowsOfAccount: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RowsOfAccount: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Uuid", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAccount
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAccount
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAccount
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Uuid = append(m.Uuid, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAccount(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAccount
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *GetAccountVersionRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAccount
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: GetAccountVersionRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: GetAccountVersionRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Uuid", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAccount
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAccount
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAccount
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Uuid = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAccount(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthAccount
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *AccountVersion) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAccount
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AccountVersion: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AccountVersion: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AccountVer", wireType)
+			}
+			m.AccountVer = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAccount
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.AccountVer |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipAccount(dAtA[iNdEx:])

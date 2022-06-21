@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	pb "v2.staffjoy.com/company"
+	"v2.staffjoy.com/frontcache"
 	"v2.staffjoy.com/helpers"
 )
 
@@ -38,7 +39,7 @@ func (s *companyServer) ListAdmins(ctx context.Context, req *pb.AdminListRequest
 		return nil, err
 	}
 
-	res := &pb.Admins{CompanyUuid: req.CompanyUuid}
+	res := &pb.Admins{CompanyUuid: req.CompanyUuid, Version: 0}
 
 	rows, err := s.db.Query("select user_uuid from admin where company_uuid=?", req.CompanyUuid)
 	if err != nil {
@@ -61,6 +62,20 @@ func (s *companyServer) ListAdmins(ctx context.Context, req *pb.AdminListRequest
 		s.admins_lock.Lock()
 		s.admins_cache[req.CompanyUuid] = res
 		s.admins_lock.Unlock()
+	}
+	return res, nil
+}
+
+func (s *companyServer) GetAdminExist(ctx context.Context, req *pb.DirectoryEntryRequest) (*pb.AdminExist, error) {
+	if _, err := s.GetCompany(ctx, &pb.GetCompanyRequest{Uuid: req.CompanyUuid}); err != nil {
+		return nil, err
+	}
+
+	res := &pb.AdminExist{}
+	err := s.db.QueryRow("SELECT EXISTS(SELECT 1 FROM admin WHERE (company_uuid=? AND user_uuid=?))",
+		req.CompanyUuid, req.UserUuid).Scan(&res.Exist)
+	if err != nil {
+		return nil, s.internalError(err, "failed to query database")
 	}
 	return res, nil
 }
@@ -98,6 +113,7 @@ func (s *companyServer) GetAdmin(ctx context.Context, req *pb.DirectoryEntryRequ
 }
 
 func (s *companyServer) DeleteAdmin(ctx context.Context, req *pb.DirectoryEntryRequest) (*empty.Empty, error) {
+	defer helpers.Duration(helpers.Track("DeleteAdmin"))
 	md, _, err := getAuth(ctx)
 	// if err != nil {
 	// 	return nil, s.internalError(err, "Failed to authorize")
@@ -126,11 +142,35 @@ func (s *companyServer) DeleteAdmin(ctx context.Context, req *pb.DirectoryEntryR
 	go helpers.TrackEventFromMetadata(md, "admin_deleted")
 
 	if s.use_caching {
-		if _, ok := s.admins_cache[req.CompanyUuid]; ok {
+		if ad, ok := s.admins_cache[req.CompanyUuid]; ok {
 			s.admins_lock.Lock()
-			delete(s.admins_cache, req.CompanyUuid)
+			var index int
+			for i, v := range ad.Admins {
+				if v.UserUuid == req.UserUuid {
+					index = i
+					break
+				}
+			}
+			s.admins_cache[req.CompanyUuid].Admins[index] = ad.Admins[len(ad.Admins)-1]
+			s.admins_cache[req.CompanyUuid].Admins = s.admins_cache[req.CompanyUuid].Admins[:len(ad.Admins)-1]
+			if !s.use_callback {
+				s.admins_cache[req.CompanyUuid].Version = ad.Version + 1
+			}
 			s.admins_lock.Unlock()
 			s.logger.Info("delete admin [company uuid:" + req.CompanyUuid + "]")
+
+			if s.use_callback {
+				frontcacheClient, close, err := frontcache.NewClient()
+				if err != nil {
+					return nil, s.internalError(err, "unable to init frontcache connection")
+				}
+				defer close()
+
+				_, err = frontcacheClient.InvalidateAdminsCache(ctx, &frontcache.InvalidateAdminsCacheRequest{CompanyUuid: req.CompanyUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache admins list cache")
+				}
+			}
 		}
 	}
 	return &empty.Empty{}, nil
@@ -172,11 +212,27 @@ func (s *companyServer) CreateAdmin(ctx context.Context, req *pb.DirectoryEntryR
 	go helpers.TrackEventFromMetadata(md, "admin_created")
 
 	if s.use_caching {
-		if _, ok := s.admins_cache[req.CompanyUuid]; ok {
+		if ad, ok := s.admins_cache[req.CompanyUuid]; ok {
 			s.admins_lock.Lock()
-			delete(s.admins_cache, req.CompanyUuid)
+			s.admins_cache[req.CompanyUuid].Admins = append(ad.Admins, *e)
+			if !s.use_callback {
+				s.admins_cache[req.CompanyUuid].Version = ad.Version + 1
+			}
 			s.admins_lock.Unlock()
-			s.logger.Info("create admin cache is invalidated [company uuid:" + req.CompanyUuid + "]")
+			s.logger.Info("CreateAdmin updates admins cache [company uuid:" + req.CompanyUuid + "]")
+
+			if s.use_callback {
+				frontcacheClient, close, err := frontcache.NewClient()
+				if err != nil {
+					return nil, s.internalError(err, "unable to init frontcache connection")
+				}
+				defer close()
+
+				_, err = frontcacheClient.InvalidateAdminsCache(ctx, &frontcache.InvalidateAdminsCacheRequest{CompanyUuid: req.CompanyUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache admins list cache")
+				}
+			}
 		}
 	}
 	return e, nil
@@ -226,4 +282,12 @@ func (s *companyServer) GetAdminOf(ctx context.Context, req *pb.AdminOfRequest) 
 	}
 
 	return res, nil
+}
+
+func (s *companyServer) GetAdminsVersion(ctx context.Context, req *pb.GetAdminsVersionRequest) (*pb.AdminsVersion, error) {
+	if res, ok := s.admins_cache[req.Uuid]; ok {
+		return &pb.AdminsVersion{AdminsVer: res.Version}, nil
+	}
+	return &pb.AdminsVersion{AdminsVer: 0}, nil
+	// return nil, fmt.Errorf("GetAdminsVersion not found req uuid")
 }

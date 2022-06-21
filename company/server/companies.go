@@ -9,6 +9,7 @@ import (
 
 	pb "v2.staffjoy.com/company"
 	"v2.staffjoy.com/crypto"
+	"v2.staffjoy.com/frontcache"
 	"v2.staffjoy.com/helpers"
 )
 
@@ -41,7 +42,7 @@ func (s *companyServer) CreateCompany(ctx context.Context, req *pb.CreateCompany
 		return nil, s.internalError(err, "cannot generate a uuid")
 	}
 
-	c := &pb.Company{Uuid: uuid.String(), Name: req.Name, DefaultDayWeekStarts: req.DefaultDayWeekStarts, DefaultTimezone: req.DefaultTimezone}
+	c := &pb.Company{Uuid: uuid.String(), Name: req.Name, DefaultDayWeekStarts: req.DefaultDayWeekStarts, DefaultTimezone: req.DefaultTimezone, Version: 0}
 	if err = s.dbMap.Insert(c); err != nil {
 		return nil, s.internalError(err, "could not create company")
 	}
@@ -50,7 +51,34 @@ func (s *companyServer) CreateCompany(ctx context.Context, req *pb.CreateCompany
 	al.Log(logger, "created company")
 	go helpers.TrackEventFromMetadata(md, "company_created")
 
+	if s.use_caching {
+		s.company_lock.Lock()
+		s.company_cache[c.Uuid] = c
+		s.company_lock.Unlock()
+	}
+
 	return c, nil
+}
+
+func (s *companyServer) ListCompanyRows(ctx context.Context, req *pb.CompanyListRequest) (*pb.RowsOfCompany, error) {
+	if req.Limit <= 0 {
+		req.Limit = 20
+	}
+
+	res := &pb.RowsOfCompany{}
+	rows, err := s.db.Query("select uuid from company limit ? offset ?", req.Limit, req.Offset)
+	if err != nil {
+		return nil, s.internalError(err, "Unable to query database")
+	}
+
+	for rows.Next() {
+		var uuid string
+		if err := rows.Scan(&uuid); err != nil {
+			return nil, s.internalError(err, "Error scanning database")
+		}
+		res.CompanyUuid = append(res.CompanyUuid, uuid)
+	}
+	return res, nil
 }
 
 func (s *companyServer) ListCompanies(ctx context.Context, req *pb.CompanyListRequest) (*pb.CompanyList, error) {
@@ -94,10 +122,10 @@ func (s *companyServer) GetCompany(ctx context.Context, req *pb.GetCompanyReques
 	// defer helpers.Duration(helpers.Track("GetCompany"))
 	if s.use_caching {
 		if res, ok := s.company_cache[req.Uuid]; ok {
-			// s.logger.Info("get company cache hit [company uuid:" + req.Uuid + "]")
+			s.logger.Info("get company cache hit [company uuid:" + req.Uuid + "]")
 			return res, nil
 		} else {
-			// s.logger.Info("get company cache miss [compant uuid:" + req.Uuid + "]")
+			s.logger.Info("get company cache miss [company uuid:" + req.Uuid + "]")
 		}
 	}
 	_, _, err := getAuth(ctx)
@@ -136,6 +164,7 @@ func (s *companyServer) GetCompany(ctx context.Context, req *pb.GetCompanyReques
 }
 
 func (s *companyServer) UpdateCompany(ctx context.Context, req *pb.Company) (*pb.Company, error) {
+	defer helpers.Duration(helpers.Track("UpdateCompany"))
 	md, _, err := getAuth(ctx)
 	// switch authz {
 	// case auth.AuthorizationAuthenticatedUser:
@@ -169,13 +198,37 @@ func (s *companyServer) UpdateCompany(ctx context.Context, req *pb.Company) (*pb
 	go helpers.TrackEventFromMetadata(md, "company_updated")
 
 	if s.use_caching {
-		if _, ok := s.company_cache[req.Uuid]; ok {
+		if c, ok := s.company_cache[req.Uuid]; ok {
 			s.company_lock.Lock()
-			delete(s.company_cache, req.Uuid)
+			s.company_cache[req.Uuid] = req
+			if !s.use_callback {
+				s.company_cache[req.Uuid].Version = c.Version + 1
+			}
 			s.company_lock.Unlock()
-			s.logger.Info("update company cache is invalidated [orig:" + req.Uuid + "]")
+			s.logger.Info("update company cache [orig:" + req.Uuid + "]")
+
+			if s.use_callback {
+				frontcacheClient, close, err := frontcache.NewClient()
+				if err != nil {
+					return nil, s.internalError(err, "unable to init frontcache connection")
+				}
+				defer close()
+
+				_, err = frontcacheClient.InvalidateCompanyCache(ctx, &frontcache.InvalidateCompanyCacheRequest{CompanyUuid: req.Uuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache company cache")
+				}
+			}
 		}
 	}
 
 	return req, nil
+}
+
+func (s *companyServer) GetCompanyVersion(ctx context.Context, req *pb.GetCompanyVersionRequest) (*pb.CompanyVersion, error) {
+	if res, ok := s.company_cache[req.Uuid]; ok {
+		return &pb.CompanyVersion{CompanyVer: res.Version}, nil
+	}
+	return &pb.CompanyVersion{CompanyVer: 0}, nil
+	// return nil, fmt.Errorf("GetCompanyVersion not found req uuid")
 }

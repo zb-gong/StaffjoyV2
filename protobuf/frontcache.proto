@@ -1,0 +1,159 @@
+syntax = "proto3";
+package staffjoy.frontcache;
+
+option go_package = "v2.staffjoy.com/frontcache";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
+import "account.proto";
+import "company.proto";
+
+option (gogoproto.sizer_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_unkeyed_all) = false;
+option (gogoproto.goproto_unrecognized_all) = false;
+option (gogoproto.goproto_sizecache_all) = false;
+
+message InvalidateWorkersCacheRequest {
+  string team_uuid = 1;
+}
+
+message InvalidateJobsCacheRequest {
+  string team_uuid = 1;
+}
+
+message InvalidateJobCacheRequest {
+  string job_uuid = 1;
+}
+
+message InvalidateCompanyCacheRequest {
+  string company_uuid = 1;
+}
+
+message InvalidateTeamsCacheRequest {
+  string company_uuid = 1;
+}
+
+message InvalidateTeamCacheRequest {
+  string team_uuid = 1;
+}
+
+message InvalidateAdminsCacheRequest {
+  string company_uuid = 1;
+}
+
+message InvalidateWorkerteamCacheRequest {
+  string worker_uuid = 1;
+}
+
+message InvalidateAccountCacheRequest {
+  string account_uuid = 1;
+}
+
+service FrontCacheService {
+  // companies
+  rpc ListCompanies(staffjoy.company.CompanyListRequest) returns (staffjoy.company.CompanyList) {
+    option (google.api.http) = {
+      get : "/v1/companies" 
+    };
+  }
+  rpc GetCompany(staffjoy.company.GetCompanyRequest) returns (staffjoy.company.Company) {
+    option (google.api.http) = {
+      get : "/v1/companies/{uuid}"
+    };
+  }
+
+  // teams
+  rpc ListTeams(staffjoy.company.TeamListRequest) returns (staffjoy.company.TeamList) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/teams"
+    };
+  }
+  rpc GetTeam(staffjoy.company.GetTeamRequest) returns (staffjoy.company.Team) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/teams/{uuid}"
+    };
+  }
+  rpc GetWorkerTeamInfo(staffjoy.company.Worker) returns (staffjoy.company.Worker) {
+    option (google.api.http) = {
+      get : "/v1/companies/{user_uuid}/teaminfo"
+    };
+  }
+
+  // jobs
+  rpc ListJobs(staffjoy.company.JobListRequest) returns (staffjoy.company.JobList) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/teams/{team_uuid}/jobs"
+    };
+  }
+  rpc GetJob(staffjoy.company.GetJobRequest) returns (staffjoy.company.Job) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/teams/{team_uuid}/jobs/{uuid}"
+    };
+  }
+
+  // Directory
+  rpc Directory(staffjoy.company.DirectoryListRequest) returns (staffjoy.company.DirectoryList) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/directory"
+    };
+  }
+  rpc GetAssociations(staffjoy.company.DirectoryListRequest) returns (staffjoy.company.AssociationList) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/associations"
+    };
+  }
+  rpc GetDirectoryEntry(staffjoy.company.DirectoryEntryRequest) returns (staffjoy.company.DirectoryEntry) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/directory/{user_uuid}"
+    };
+  }
+
+  // Admins
+  rpc ListAdmins(staffjoy.company.AdminListRequest) returns (staffjoy.company.Admins) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/admins"
+    };
+  }
+  rpc GetAdmin(staffjoy.company.DirectoryEntryRequest) returns (staffjoy.company.DirectoryEntry) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/admins/{user_uuid}"
+    };
+  }
+
+  // Workers
+  rpc ListWorkers(staffjoy.company.WorkerListRequest) returns (staffjoy.company.Workers) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/teams/{team_uuid}/workers"
+    };
+  }
+  rpc GetWorker(staffjoy.company.Worker) returns (staffjoy.company.DirectoryEntry) {
+    option (google.api.http) = {
+      get : "/v1/companies/{company_uuid}/teams/{team_uuid}/workers/{user_uuid}"
+    };
+  }
+
+  // Accounts
+  rpc ListAccounts(staffjoy.account.GetAccountListRequest) returns (staffjoy.account.AccountList) {
+    option (google.api.http) = {
+      get : "/v1/accounts"
+    };
+  }
+  rpc GetAccount(staffjoy.account.GetAccountRequest) returns (staffjoy.account.Account) {
+    option (google.api.http) = {
+      get : "/v1/accounts/{uuid}"
+    };
+  }
+
+  rpc InvalidateWorkersCache(InvalidateWorkersCacheRequest) returns (google.protobuf.Empty) {}
+  rpc InvalidateJobsCache(InvalidateJobsCacheRequest) returns (google.protobuf.Empty) {}
+  rpc InvalidateJobCache(InvalidateJobCacheRequest) returns (google.protobuf.Empty) {}
+  rpc InvalidateCompanyCache(InvalidateCompanyCacheRequest) returns (google.protobuf.Empty) {}
+  rpc InvalidateTeamsCache(InvalidateTeamsCacheRequest) returns (google.protobuf.Empty) {}
+  rpc InvalidateTeamCache(InvalidateTeamCacheRequest) returns (google.protobuf.Empty) {}
+  rpc InvalidateAdminsCache(InvalidateAdminsCacheRequest) returns (google.protobuf.Empty) {}
+  rpc InvalidateWorkerteamCache(InvalidateWorkerteamCacheRequest) returns (google.protobuf.Empty) {}
+  rpc InvalidateAccountCache(InvalidateAccountCacheRequest) returns (google.protobuf.Empty) {}
+}

@@ -9,6 +9,7 @@ import (
 
 	pb "v2.staffjoy.com/company"
 	"v2.staffjoy.com/crypto"
+	"v2.staffjoy.com/frontcache"
 	"v2.staffjoy.com/helpers"
 )
 
@@ -53,7 +54,7 @@ func (s *companyServer) CreateTeam(ctx context.Context, req *pb.CreateTeamReques
 	if err != nil {
 		return nil, s.internalError(err, "cannot generate a uuid")
 	}
-	t := &pb.Team{Uuid: uuid.String(), CompanyUuid: req.CompanyUuid, Name: req.Name, DayWeekStarts: req.DayWeekStarts, Timezone: req.Timezone, Color: req.Color}
+	t := &pb.Team{Uuid: uuid.String(), CompanyUuid: req.CompanyUuid, Name: req.Name, DayWeekStarts: req.DayWeekStarts, Timezone: req.Timezone, Color: req.Color, Version: 0}
 
 	if err = s.dbMap.Insert(t); err != nil {
 		return nil, s.internalError(err, "could not create team")
@@ -65,11 +66,31 @@ func (s *companyServer) CreateTeam(ctx context.Context, req *pb.CreateTeamReques
 	go helpers.TrackEventFromMetadata(md, "team_created")
 
 	if s.use_caching {
-		if _, ok := s.teams_cache[req.CompanyUuid]; ok {
+		s.team_lock.Lock()
+		s.team_cache[t.Uuid] = t
+		s.team_lock.Unlock()
+
+		if ts, ok := s.teams_cache[req.CompanyUuid]; ok {
 			s.teams_lock.Lock()
-			delete(s.teams_cache, req.CompanyUuid)
+			s.teams_cache[req.CompanyUuid].Teams = append(ts.Teams, *t)
+			if !s.use_callback {
+				s.teams_cache[req.CompanyUuid].Version = ts.Version + 1
+			}
 			s.teams_lock.Unlock()
-			s.logger.Info("create team cache is invalidated [company uuid:" + req.CompanyUuid + "]")
+			s.logger.Info("CreateTeam updates teams list [company uuid:" + req.CompanyUuid + "]")
+
+			if s.use_callback {
+				frontcacheClient, close, err := frontcache.NewClient()
+				if err != nil {
+					return nil, s.internalError(err, "unable to init frontcache connection")
+				}
+				defer close()
+
+				_, err = frontcacheClient.InvalidateTeamsCache(ctx, &frontcache.InvalidateTeamsCacheRequest{CompanyUuid: req.CompanyUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache team list cache")
+				}
+			}
 		}
 	}
 
@@ -105,7 +126,7 @@ func (s *companyServer) ListTeams(ctx context.Context, req *pb.TeamListRequest) 
 		return nil, err
 	}
 
-	res := &pb.TeamList{}
+	res := &pb.TeamList{Version: 0}
 	rows, err := s.db.Query("select uuid from team where company_uuid=?", req.CompanyUuid)
 	if err != nil {
 		return nil, s.internalError(err, "unable to query database")
@@ -157,6 +178,16 @@ func (s *companyServer) GetTeam(ctx context.Context, req *pb.GetTeamRequest) (*p
 		return nil, err
 	}
 
+	// after checking company uuid is valid
+	if s.use_caching {
+		if res, ok := s.team_cache[req.Uuid]; ok {
+			s.logger.Info("get teams cache hit [Team uuid:" + req.Uuid + "]")
+			return res, nil
+		} else {
+			s.logger.Info("get teams cache miss [Team uuid:" + req.Uuid + "]")
+		}
+	}
+
 	obj, err := s.dbMap.Get(pb.Team{}, req.Uuid)
 	if err != nil {
 		return nil, s.internalError(err, "unable to query database")
@@ -165,11 +196,17 @@ func (s *companyServer) GetTeam(ctx context.Context, req *pb.GetTeamRequest) (*p
 	}
 	t := obj.(*pb.Team)
 	t.CompanyUuid = req.CompanyUuid
-	return t, nil
 
+	if s.use_caching {
+		s.team_lock.Lock()
+		s.team_cache[req.Uuid] = t
+		s.team_lock.Unlock()
+	}
+	return t, nil
 }
 
 func (s *companyServer) UpdateTeam(ctx context.Context, req *pb.Team) (*pb.Team, error) {
+	defer helpers.Duration(helpers.Track("UpdateTeam"))
 	md, _, err := getAuth(ctx)
 	// switch authz {
 	// case auth.AuthorizationAuthenticatedUser:
@@ -212,17 +249,67 @@ func (s *companyServer) UpdateTeam(ctx context.Context, req *pb.Team) (*pb.Team,
 	go helpers.TrackEventFromMetadata(md, "team_updated")
 
 	if s.use_caching {
-		if _, ok := s.teams_cache[t.CompanyUuid]; ok {
-			s.teams_lock.Lock()
-			delete(s.teams_cache, t.CompanyUuid)
-			s.teams_lock.Unlock()
-			s.logger.Info("update team cache is invalidated [orig:" + t.CompanyUuid + "]")
+		frontcacheClient, close, err := frontcache.NewClient()
+		if err != nil {
+			return nil, s.internalError(err, "unable to init frontcache connection")
 		}
-		if _, ok := s.teams_cache[req.CompanyUuid]; ok {
+		defer close()
+
+		if ts, ok := s.teams_cache[t.CompanyUuid]; ok {
 			s.teams_lock.Lock()
-			delete(s.teams_cache, req.CompanyUuid)
+			var index int
+			for i, v := range ts.Teams {
+				if v.Uuid == req.Uuid {
+					index = i
+					break
+				}
+			}
+			s.teams_cache[t.CompanyUuid].Teams[index] = ts.Teams[len(ts.Teams)-1]
+			s.teams_cache[t.CompanyUuid].Teams = s.teams_cache[t.CompanyUuid].Teams[:len(ts.Teams)-1]
+			if !s.use_callback {
+				s.teams_cache[t.CompanyUuid].Version = ts.Version + 1
+			}
 			s.teams_lock.Unlock()
-			s.logger.Info("update team cache is invalidated [req:" + req.CompanyUuid + "]")
+			s.logger.Info("UpdateTeams updates orig teams cache [orig:" + t.CompanyUuid + "]")
+
+			if s.use_callback {
+				_, err = frontcacheClient.InvalidateTeamsCache(ctx, &frontcache.InvalidateTeamsCacheRequest{CompanyUuid: t.CompanyUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache team list cache")
+				}
+			}
+		}
+		if ts, ok := s.teams_cache[req.CompanyUuid]; ok {
+			s.teams_lock.Lock()
+			s.teams_cache[req.CompanyUuid].Teams = append(ts.Teams, *req)
+			if !s.use_callback && req.CompanyUuid != t.CompanyUuid {
+				s.teams_cache[req.CompanyUuid].Version = ts.Version + 1
+			}
+			s.teams_lock.Unlock()
+			s.logger.Info("UpdateTeams updates req teams cache [req:" + req.CompanyUuid + "]")
+
+			if s.use_callback {
+				_, err = frontcacheClient.InvalidateTeamsCache(ctx, &frontcache.InvalidateTeamsCacheRequest{CompanyUuid: req.CompanyUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache team list cache")
+				}
+			}
+		}
+		if ts, ok := s.team_cache[t.Uuid]; ok {
+			s.team_lock.Lock()
+			s.team_cache[t.Uuid] = t
+			if !s.use_callback {
+				s.team_cache[t.Uuid].Version = ts.Version + 1
+			}
+			s.team_lock.Unlock()
+			s.logger.Info("UpdateTeam updates team cache [req:" + t.Uuid + "]")
+
+			if s.use_callback {
+				_, err = frontcacheClient.InvalidateTeamCache(ctx, &frontcache.InvalidateTeamCacheRequest{TeamUuid: t.Uuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache team cache")
+				}
+			}
 		}
 	}
 
@@ -288,7 +375,34 @@ func (s *companyServer) GetWorkerTeamInfo(ctx context.Context, req *pb.Worker) (
 	if s.use_caching {
 		s.workerteam_lock.Lock()
 		s.workerteam_cache[req.UserUuid] = w
+		if !s.use_callback {
+			s.workerteam_cache[req.UserUuid].Version = 0
+		}
 		s.workerteam_lock.Unlock()
 	}
 	return w, nil
+}
+
+func (s *companyServer) GetTeamsVersion(ctx context.Context, req *pb.GetTeamsVersionRequest) (*pb.TeamsVersion, error) {
+	if res, ok := s.teams_cache[req.Uuid]; ok {
+		return &pb.TeamsVersion{TeamsVer: res.Version}, nil
+	}
+	return &pb.TeamsVersion{TeamsVer: 0}, nil
+	// return nil, fmt.Errorf("GetTeamsVersion not found req uuid")
+}
+
+func (s *companyServer) GetTeamVersion(ctx context.Context, req *pb.GetTeamVersionRequest) (*pb.TeamVersion, error) {
+	if res, ok := s.team_cache[req.Uuid]; ok {
+		return &pb.TeamVersion{TeamVer: res.Version}, nil
+	}
+	return &pb.TeamVersion{TeamVer: 0}, nil
+	// return nil, fmt.Errorf("GetTeamVersion not found req uuid")
+}
+
+func (s *companyServer) GetWorkerTeamVersion(ctx context.Context, req *pb.GetWorkerTeamVersionRequest) (*pb.WorkerTeamVersion, error) {
+	if res, ok := s.workerteam_cache[req.Uuid]; ok {
+		return &pb.WorkerTeamVersion{WorkerteamVer: res.Version}, nil
+	}
+	return &pb.WorkerTeamVersion{WorkerteamVer: 0}, nil
+	// return nil, fmt.Errorf("GetWorkerTeamVersion not found req uuid")
 }

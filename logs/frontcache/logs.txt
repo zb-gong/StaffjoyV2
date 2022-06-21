@@ -1,0 +1,112 @@
+{"env":"development","level":"debug","msg":"Booting frontcacheserver environment development","service":"frontcacheserver","time":"2022-06-14T01:22:44-04:00"}
+{"env":"development","level":"info","msg":"Starting to listen frontcacheserver service","service":"frontcacheserver","time":"2022-06-14T01:22:44-04:00"}
+{"env":"development","level":"debug","msg":"Booting frontcacheserver health check development","service":"frontcacheserver","time":"2022-06-14T01:22:44-04:00"}
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 981.37µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:86043591-3761-4beb-62df-9572c3221605]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 741.435µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:5e62cf30-0083-4b9d-7689-6d03dda184b1]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 935.349µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:14deb12b-ebb0-4d87-6b4f-923178e30cb1]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 1.138823ms
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:1facb134-706c-41ad-629d-f2e333a090e0]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 817.536µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:26988c22-40c1-4fdf-5270-e9c81187bdc0]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 663.951µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:152e3dce-85ee-4909-44e0-d7065d8b1faf]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 663.941µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:880a2912-7a84-4c9f-472a-74723070e277]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 598.721µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:68aca318-4691-44b3-5cc1-13b59d70a5d8]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 571.128µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:db2d3524-018a-480a-4a40-2009e104e508]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 576.34µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:ce5a8319-b146-46f8-5ac9-79247d7955a4]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 529.034µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:c5f7b7f3-890c-47f0-5e3b-02e5b727c13a]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 556.375µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:68ac6659-b812-4a41-4263-7bc07b469978]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 623.765µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:e5a85a85-64ee-4253-6f6e-88652f7fa2f7]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 596.771µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:cf5f40a3-b983-43a5-6641-217d631d19af]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 555.856µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:58591685-ba83-4822-5c63-cecdcc6733d2]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 647.469µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:fa9b2b54-35dd-4fef-4fdf-56cb1bbc9436]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 874.858µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:e0f92b1b-92a2-4117-7abd-4c62210b12a4]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 615.404µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:f35b8c43-fac8-41ca-7ed3-e59acac56e94]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 935.015µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache miss [company uuid:f54b730b-c8e2-4310-4768-645a19b2e338]","service":"frontcacheserver","time":"2022-06-14T01:22:58-04:00"}
+2022/06/14 01:22:58 GetCompany: 578.852µs
+2022/06/14 01:22:58 ListCompanies: 18.109154ms
+{"env":"development","level":"info","msg":"Front Cache ListTeams cache miss [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:23:58-04:00"}
+2022/06/14 01:23:58 ListTeams: 4.563441ms
+{"env":"development","level":"info","msg":"Front Cache ListTeams cache hit [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:24:22-04:00"}
+2022/06/14 01:24:22 ListTeams: 279.569µs
+{"env":"development","level":"info","msg":"FrontCache delete teams [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:24:53-04:00"}
+{"env":"development","level":"info","msg":"FrontCache delete team [team uuid:2c02c987-10e0-4c53-719c-21707b268f1a]","service":"frontcacheserver","time":"2022-06-14T01:24:53-04:00"}
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache hit [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:29:01-04:00"}
+2022/06/14 01:29:01 GetCompany: 305.381µs
+{"env":"development","level":"info","msg":"Front Cache GetTeam cache hit [team uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:29:01-04:00"}
+2022/06/14 01:29:01 GetTeam: 405.68µs
+{"env":"development","level":"info","msg":"Front Cache ListJobs cache miss [user uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:29:01-04:00"}
+2022/06/14 01:29:01 ListJobs: 3.318902ms
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache hit [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:29:47-04:00"}
+2022/06/14 01:29:47 GetCompany: 245.056µs
+{"env":"development","level":"info","msg":"Front Cache GetTeam cache hit [team uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:29:47-04:00"}
+2022/06/14 01:29:47 GetTeam: 349.065µs
+{"env":"development","level":"info","msg":"Front Cache ListJobs cache hit [user uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:29:47-04:00"}
+2022/06/14 01:29:47 ListJobs: 566.717µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache hit [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:30:46-04:00"}
+2022/06/14 01:30:46 GetCompany: 243.623µs
+{"env":"development","level":"info","msg":"Front Cache GetTeam cache miss [team uuid:2c02c987-10e0-4c53-719c-21707b268f1a]","service":"frontcacheserver","time":"2022-06-14T01:30:46-04:00"}
+2022/06/14 01:30:46 GetTeam: 1.775656ms
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache hit [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:31:09-04:00"}
+2022/06/14 01:31:09 GetCompany: 265.135µs
+{"env":"development","level":"info","msg":"Front Cache GetTeam cache hit [team uuid:2c02c987-10e0-4c53-719c-21707b268f1a]","service":"frontcacheserver","time":"2022-06-14T01:31:09-04:00"}
+2022/06/14 01:31:09 GetTeam: 392.666µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache hit [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:31:36-04:00"}
+2022/06/14 01:31:36 GetCompany: 343.465µs
+{"env":"development","level":"info","msg":"Front Cache GetTeam cache hit [team uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:31:36-04:00"}
+2022/06/14 01:31:36 GetTeam: 554.774µs
+{"env":"development","level":"info","msg":"Front Cache GetJob cache hit [job uuid:03bedcc3-88cc-4ecc-7b26-629069d38812]","service":"frontcacheserver","time":"2022-06-14T01:31:36-04:00"}
+2022/06/14 01:31:36 GetJob: 737.268µs
+{"env":"development","level":"info","msg":"FrontCache delete jobs [team uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:32:28-04:00"}
+{"env":"development","level":"info","msg":"FrontCache delete job [team uuid:03bedcc3-88cc-4ecc-7b26-629069d38812]","service":"frontcacheserver","time":"2022-06-14T01:32:28-04:00"}
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache hit [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:32:28-04:00"}
+2022/06/14 01:32:28 GetCompany: 153.018µs
+{"env":"development","level":"info","msg":"Front Cache GetTeam cache hit [team uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:32:28-04:00"}
+2022/06/14 01:32:28 GetTeam: 264.044µs
+{"env":"development","level":"info","msg":"Front Cache GetJob cache miss [job uuid:03bedcc3-88cc-4ecc-7b26-629069d38812]","service":"frontcacheserver","time":"2022-06-14T01:32:28-04:00"}
+2022/06/14 01:32:28 GetJob: 811.087µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache hit [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:33:47-04:00"}
+2022/06/14 01:33:47 GetCompany: 259.748µs
+{"env":"development","level":"info","msg":"Front Cache GetTeam cache hit [team uuid:04034557-3085-47b9-4a0a-cdd7bb62484e]","service":"frontcacheserver","time":"2022-06-14T01:33:47-04:00"}
+2022/06/14 01:33:47 GetTeam: 339.746µs
+{"env":"development","level":"info","msg":"Front Cache GetJob cache miss [job uuid:03e0e3a6-ce4a-40ff-60e6-f01c35ce47ab]","service":"frontcacheserver","time":"2022-06-14T01:33:47-04:00"}
+2022/06/14 01:33:47 GetJob: 2.375935ms
+{"env":"development","level":"info","msg":"Front Cache ListAdmins cache miss [user uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:34:35-04:00"}
+2022/06/14 01:34:35 ListAdmins: 3.037924ms
+{"env":"development","level":"info","msg":"Front Cache ListAdmins cache hit [user uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:34:49-04:00"}
+2022/06/14 01:34:49 ListAdmins: 218.769µs
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache hit [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:39:20-04:00"}
+2022/06/14 01:39:20 GetCompany: 326.353µs
+{"env":"development","level":"info","msg":"Front Cache GetTeam cache hit [team uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:39:20-04:00"}
+2022/06/14 01:39:20 GetTeam: 410.457µs
+{"env":"development","level":"info","msg":"Front Cache ListWorkers cache miss [user uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:39:20-04:00"}
+2022/06/14 01:39:20 ListWorkers: 13.919349ms
+{"env":"development","level":"info","msg":"Front Cache GetCompany cache hit [company uuid:a19b592e-d258-4bab-4524-1e3d758557a9]","service":"frontcacheserver","time":"2022-06-14T01:39:39-04:00"}
+2022/06/14 01:39:39 GetCompany: 245.713µs
+{"env":"development","level":"info","msg":"Front Cache GetTeam cache hit [team uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:39:39-04:00"}
+2022/06/14 01:39:39 GetTeam: 377.011µs
+{"env":"development","level":"info","msg":"Front Cache ListWorkers cache hit [user uuid:a50e5c57-afe1-4a35-7d95-56e5aaf27db2]","service":"frontcacheserver","time":"2022-06-14T01:39:39-04:00"}
+2022/06/14 01:39:39 ListWorkers: 486.495µs
+{"env":"development","level":"info","msg":"Front Cache GetAccount cache miss [account uuid:]","service":"frontcacheserver","time":"2022-06-14T01:39:57-04:00"}
+{"env":"development","level":"error","msg":"error getting list workers: rpc error: code = InvalidArgument desc = uuid must be specified","service":"frontcacheserver","time":"2022-06-14T01:39:57-04:00"}
+2022/06/14 01:39:57 GetAccount: 1.230907ms
+{"env":"development","level":"info","msg":"Front Cache GetAccount cache miss [account uuid:]","service":"frontcacheserver","time":"2022-06-14T01:40:01-04:00"}
+{"env":"development","level":"error","msg":"error getting list workers: rpc error: code = InvalidArgument desc = uuid must be specified","service":"frontcacheserver","time":"2022-06-14T01:40:01-04:00"}
+2022/06/14 01:40:01 GetAccount: 1.409163ms

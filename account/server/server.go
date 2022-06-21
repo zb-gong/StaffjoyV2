@@ -26,6 +26,7 @@ import (
 	"v2.staffjoy.com/crypto"
 	"v2.staffjoy.com/email"
 	"v2.staffjoy.com/environments"
+	"v2.staffjoy.com/frontcache"
 	"v2.staffjoy.com/helpers"
 	"v2.staffjoy.com/sms"
 )
@@ -43,7 +44,8 @@ type accountServer struct {
 	dbMap        *gorp.DbMap
 	smsClient    sms.SmsServiceClient
 
-	use_caching bool
+	use_caching  bool
+	use_callback bool
 	// ListAccount cache
 	account_cache map[string]*pb.Account
 	account_lock  sync.RWMutex
@@ -152,7 +154,7 @@ func (s *accountServer) Create(ctx context.Context, req *pb.CreateAccountRequest
 		return nil, s.internalError(err, "Cannot generate a user id")
 	}
 
-	a := &pb.Account{Uuid: uuid.String(), Email: req.Email, Name: req.Name, Phonenumber: req.Phonenumber}
+	a := &pb.Account{Uuid: uuid.String(), Email: req.Email, Name: req.Name, Phonenumber: req.Phonenumber, Version: 0}
 	a.PhotoUrl = GenerateGravatarURL(a.Email)
 	a.MemberSince = time.Now()
 
@@ -197,7 +199,38 @@ func (s *accountServer) Create(ctx context.Context, req *pb.CreateAccountRequest
 	al.UpdatedContents = a
 	al.Log(logger, "created account")
 
+	if s.use_caching {
+		s.account_lock.Lock()
+		s.account_cache[a.Uuid] = a
+		s.account_lock.Unlock()
+	}
+
 	return a, nil
+}
+
+func (s *accountServer) ListAccountRows(ctx context.Context, req *pb.GetAccountListRequest) (*pb.RowsOfAccount, error) {
+	if req.Offset < 0 {
+		return nil, grpc.Errorf(codes.InvalidArgument, "Invalid offset - must be greater than or equal to zero")
+	}
+	if req.Limit <= 0 {
+		// Set a default
+		req.Limit = 20
+	}
+
+	res := &pb.RowsOfAccount{}
+	rows, err := s.db.Query("select uuid from account limit ? offset ?", req.Limit, req.Offset)
+	if err != nil {
+		return nil, s.internalError(err, "Unable to query database")
+	}
+
+	for rows.Next() {
+		var u string
+		if err := rows.Scan(&u); err != nil {
+			return nil, s.internalError(err, "Error scanning database")
+		}
+		res.Uuid = append(res.Uuid, u)
+	}
+	return res, nil
 }
 
 func (s *accountServer) List(ctx context.Context, req *pb.GetAccountListRequest) (*pb.AccountList, error) {
@@ -216,7 +249,7 @@ func (s *accountServer) List(ctx context.Context, req *pb.GetAccountListRequest)
 	}
 	if req.Limit <= 0 {
 		// Set a default
-		req.Limit = 10000
+		req.Limit = 20
 	}
 	res := &pb.AccountList{Limit: req.Limit, Offset: req.Offset}
 
@@ -241,6 +274,7 @@ func (s *accountServer) List(ctx context.Context, req *pb.GetAccountListRequest)
 }
 
 func (s *accountServer) Get(ctx context.Context, req *pb.GetAccountRequest) (*pb.Account, error) {
+	defer helpers.Duration(helpers.Track("GetAccount"))
 	if s.use_caching {
 		if res, ok := s.account_cache[req.Uuid]; ok {
 			s.logger.Info("get account cache hit [account uuid:" + req.Uuid + "]")
@@ -296,6 +330,7 @@ func (s *accountServer) Get(ctx context.Context, req *pb.GetAccountRequest) (*pb
 }
 
 func (s *accountServer) Update(ctx context.Context, req *pb.Account) (*pb.Account, error) {
+	defer helpers.Duration(helpers.Track("UpdateAccount"))
 	md, _, err := getAuth(ctx)
 	// if err != nil {
 	// 	return nil, s.internalError(err, "Failed to authorize")
@@ -396,22 +431,39 @@ func (s *accountServer) Update(ctx context.Context, req *pb.Account) (*pb.Accoun
 
 	// cache callback
 	if s.use_caching {
-		if _, ok := s.account_cache[req.Uuid]; ok {
+		if a, ok := s.account_cache[req.Uuid]; ok {
 			s.account_lock.Lock()
-			delete(s.account_cache, req.Uuid)
-			s.account_lock.Unlock()
-			s.logger.Info("update account cache is invalidated [orig:" + req.Uuid + "]")
-
-			// callback to invalidate the companies cache
-			companyClient, close, err := company.NewClient()
-			if err != nil {
-				return nil, s.internalError(err, "could not create company client")
+			s.account_cache[req.Uuid] = req
+			if !s.use_callback {
+				s.account_cache[req.Uuid].Version = a.Version + 1
 			}
-			defer close()
+			s.account_lock.Unlock()
+			s.logger.Info("UpdateAccount udpates account cache [orig:" + req.Uuid + "]")
 
-			_, err = companyClient.InvalidateCache(ctx, &company.InvalidateCacheRequest{UserUuid: req.Uuid})
-			if err != nil {
-				s.logger.Info("cache is not successfully evicted")
+			/* company has no account cache anymore */
+			// // callback to invalidate the companies cache
+			// companyClient, close, err := company.NewClient()
+			// if err != nil {
+			// 	return nil, s.internalError(err, "could not create company client")
+			// }
+			// defer close()
+
+			// _, err = companyClient.InvalidateCache(ctx, &company.InvalidateCacheRequest{UserUuid: req.Uuid})
+			// if err != nil {
+			// 	s.logger.Info("cache is not successfully evicted")
+			// }
+
+			if s.use_callback {
+				frontcacheClient, close, err := frontcache.NewClient()
+				if err != nil {
+					return nil, s.internalError(err, "unable to init frontcache connection")
+				}
+				defer close()
+
+				_, err = frontcacheClient.InvalidateAccountCache(ctx, &frontcache.InvalidateAccountCacheRequest{AccountUuid: req.Uuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache account cache")
+				}
 			}
 		}
 	}
@@ -476,26 +528,39 @@ func (s *accountServer) UpdatePassword(ctx context.Context, req *pb.UpdatePasswo
 	go helpers.TrackEventFromMetadata(md, "password_updated")
 
 	// callback
-	if s.use_caching {
-		if _, ok := s.account_cache[req.Uuid]; ok {
-			s.account_lock.Lock()
-			delete(s.account_cache, req.Uuid)
-			s.account_lock.Unlock()
-			s.logger.Info("update account password cache is invalidated [orig:" + req.Uuid + "]")
+	// if s.use_caching {
+	// 	if _, ok := s.account_cache[req.Uuid]; ok {
+	// 		s.account_lock.Lock()
+	// 		s.account_cache[req.Uuid]. = req.Password
+	// 		s.account_lock.Unlock()
+	// 		s.logger.Info("update account password cache is invalidated [orig:" + req.Uuid + "]")
 
-			//callback to invalidate the companies cache
-			companyClient, close, err := company.NewClient()
-			if err != nil {
-				return nil, s.internalError(err, "could not create company client")
-			}
-			defer close()
+	// 		/* company account cache is not needed */
+	// 		// //callback to invalidate the companies cache
+	// 		// companyClient, close, err := company.NewClient()
+	// 		// if err != nil {
+	// 		// 	return nil, s.internalError(err, "could not create company client")
+	// 		// }
+	// 		// defer close()
+	// 		// _, err = companyClient.InvalidateCache(ctx, &company.InvalidateCacheRequest{UserUuid: req.Uuid})
+	// 		// if err != nil {
+	// 		// 	s.logger.Info("cache is not successfully evicted")
+	// 		// }
 
-			_, err = companyClient.InvalidateCache(ctx, &company.InvalidateCacheRequest{UserUuid: req.Uuid})
-			if err != nil {
-				s.logger.Info("cache is not successfully evicted")
-			}
-		}
-	}
+	// 		if s.use_callback {
+	// 			frontcacheClient, close, err := frontcache.NewClient()
+	// 			if err != nil {
+	// 				return nil, s.internalError(err, "unable to init frontcache connection")
+	// 			}
+	// 			defer close()
+
+	// 			_, err = frontcacheClient.InvalidateAccountCache(ctx, &frontcache.InvalidateAccountCacheRequest{AccountUuid: req.Uuid})
+	// 			if err != nil {
+	// 				return nil, s.internalError(err, "error invalidate FrontCache account cache")
+	// 			}
+	// 		}
+	// 	}
+	// }
 	return &empty.Empty{}, nil
 }
 
@@ -703,23 +768,38 @@ func (s *accountServer) ChangeEmail(ctx context.Context, req *pb.EmailConfirmati
 	go helpers.TrackEventFromMetadata(md, "email_updated")
 
 	if s.use_caching {
-		if _, ok := s.account_cache[req.Uuid]; ok {
+		if a, ok := s.account_cache[req.Uuid]; ok {
 			s.account_lock.Lock()
-			delete(s.account_cache, req.Uuid)
+			s.account_cache[req.Uuid].Email = req.Email
+			if !s.use_callback {
+				s.account_cache[req.Uuid].Version = a.Version + 1
+			}
 			s.account_lock.Unlock()
-			s.logger.Info("update account email cache is invalidated [orig:" + req.Uuid + "]")
+			s.logger.Info("UpdateAccountEmail updates account cachhe email [orig:" + req.Uuid + "]")
 		}
 
-		// callback to invalidate the companies cache
-		companyClient, close, err := company.NewClient()
-		if err != nil {
-			return nil, s.internalError(err, "could not create company client")
-		}
-		defer close()
+		// // callback to invalidate the companies cache
+		// companyClient, close, err := company.NewClient()
+		// if err != nil {
+		// 	return nil, s.internalError(err, "could not create company client")
+		// }
+		// defer close()
+		// _, err = companyClient.InvalidateCache(ctx, &company.InvalidateCacheRequest{UserUuid: req.Uuid})
+		// if err != nil {
+		// 	s.logger.Info("cache is not successfully evicted")
+		// }
 
-		_, err = companyClient.InvalidateCache(ctx, &company.InvalidateCacheRequest{UserUuid: req.Uuid})
-		if err != nil {
-			s.logger.Info("cache is not successfully evicted")
+		if s.use_callback {
+			frontcacheClient, close, err := frontcache.NewClient()
+			if err != nil {
+				return nil, s.internalError(err, "unable to init frontcache connection")
+			}
+			defer close()
+
+			_, err = frontcacheClient.InvalidateAccountCache(ctx, &frontcache.InvalidateAccountCacheRequest{AccountUuid: req.Uuid})
+			if err != nil {
+				return nil, s.internalError(err, "error invalidate FrontCache account cache")
+			}
 		}
 	}
 	return &empty.Empty{}, nil
@@ -821,4 +901,12 @@ func (s *accountServer) SyncUser(ctx context.Context, req *pb.SyncUserRequest) (
 	}
 	s.logger.Debugf("updated intercom")
 	return &empty.Empty{}, nil
+}
+
+func (s *accountServer) GetAccountVersion(ctx context.Context, req *pb.GetAccountVersionRequest) (*pb.AccountVersion, error) {
+	if res, ok := s.account_cache[req.Uuid]; ok {
+		return &pb.AccountVersion{AccountVer: res.Version}, nil
+	}
+	return &pb.AccountVersion{AccountVer: 0}, nil
+	// return nil, fmt.Errorf("GetAccountVersion not found req uuid")
 }

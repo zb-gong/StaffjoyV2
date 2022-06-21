@@ -7,19 +7,12 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	pb "v2.staffjoy.com/company"
+	"v2.staffjoy.com/frontcache"
 	"v2.staffjoy.com/helpers"
 )
 
 func (s *companyServer) ListWorkers(ctx context.Context, req *pb.WorkerListRequest) (*pb.Workers, error) {
 	defer helpers.Duration(helpers.Track("ListWorkers"))
-	if s.use_caching {
-		if res, ok := s.workers_cache[req.TeamUuid]; ok {
-			s.logger.Info("list worker cache hit [team uuid:" + req.TeamUuid + "]")
-			return res, nil
-		} else {
-			s.logger.Info("list worker cache miss [team uuid:" + req.TeamUuid + "]")
-		}
-	}
 
 	// Prep
 	_, _, err := getAuth(ctx)
@@ -41,7 +34,16 @@ func (s *companyServer) ListWorkers(ctx context.Context, req *pb.WorkerListReque
 		return nil, err
 	}
 
-	res := &pb.Workers{CompanyUuid: req.CompanyUuid, TeamUuid: req.TeamUuid}
+	if s.use_caching {
+		if res, ok := s.workers_cache[req.TeamUuid]; ok {
+			s.logger.Info("list worker cache hit [team uuid:" + req.TeamUuid + "]")
+			return res, nil
+		} else {
+			s.logger.Info("list worker cache miss [team uuid:" + req.TeamUuid + "]")
+		}
+	}
+
+	res := &pb.Workers{CompanyUuid: req.CompanyUuid, TeamUuid: req.TeamUuid, Version: 0}
 
 	rows, err := s.db.Query("select user_uuid from worker where team_uuid=?", req.TeamUuid)
 	if err != nil {
@@ -64,6 +66,19 @@ func (s *companyServer) ListWorkers(ctx context.Context, req *pb.WorkerListReque
 		s.workers_lock.Lock()
 		s.workers_cache[req.TeamUuid] = res
 		s.workers_lock.Unlock()
+	}
+	return res, nil
+}
+
+func (s *companyServer) GetWorkerexist(ctx context.Context, req *pb.Worker) (*pb.WorkerExist, error) {
+	if _, err := s.GetTeam(ctx, &pb.GetTeamRequest{CompanyUuid: req.CompanyUuid, Uuid: req.TeamUuid}); err != nil {
+		return nil, err
+	}
+
+	res := &pb.WorkerExist{}
+	err := s.db.QueryRow("SELECT EXISTS(SELECT 1 FROM worker WHERE (team_uuid=? AND user_uuid=?))", req.TeamUuid, req.UserUuid).Scan(&res.Exist)
+	if err != nil {
+		return nil, s.internalError(err, "failed to query database")
 	}
 	return res, nil
 }
@@ -99,6 +114,7 @@ func (s *companyServer) GetWorker(ctx context.Context, req *pb.Worker) (*pb.Dire
 }
 
 func (s *companyServer) DeleteWorker(ctx context.Context, req *pb.Worker) (*empty.Empty, error) {
+	defer helpers.Duration(helpers.Track("DeleteWorker"))
 	md, _, err := getAuth(ctx)
 	// if err != nil {
 	// 	return nil, s.internalError(err, "Failed to authorize")
@@ -125,11 +141,47 @@ func (s *companyServer) DeleteWorker(ctx context.Context, req *pb.Worker) (*empt
 	go helpers.TrackEventFromMetadata(md, "worker_deleted")
 
 	if s.use_caching {
-		if _, ok := s.workers_cache[req.TeamUuid]; ok {
+		frontcacheClient, close, err := frontcache.NewClient()
+		if err != nil {
+			return nil, s.internalError(err, "unable to init frontcache connection")
+		}
+		defer close()
+
+		if ws, ok := s.workers_cache[req.TeamUuid]; ok {
 			s.workers_lock.Lock()
-			delete(s.workers_cache, req.TeamUuid)
+			var index int
+			for i, v := range ws.Workers {
+				if v.UserUuid == req.UserUuid {
+					index = i
+					break
+				}
+			}
+			s.workers_cache[req.TeamUuid].Workers[index] = ws.Workers[len(ws.Workers)-1]
+			s.workers_cache[req.TeamUuid].Workers = s.workers_cache[req.TeamUuid].Workers[:len(ws.Workers)-1]
+			if !s.use_callback {
+				s.workers_cache[req.TeamUuid].Version = ws.Version + 1
+			}
 			s.workers_lock.Unlock()
 			s.logger.Info("delete worker [team uuid:" + req.TeamUuid + "]")
+
+			if s.use_callback {
+				_, err = frontcacheClient.InvalidateWorkersCache(ctx, &frontcache.InvalidateWorkersCacheRequest{TeamUuid: req.TeamUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache worker list cache")
+				}
+			}
+		}
+		if _, ok := s.workerteam_cache[req.UserUuid]; ok {
+			s.workerteam_lock.Lock()
+			delete(s.workerteam_cache, req.UserUuid)
+			s.workers_lock.Unlock()
+
+			if s.use_callback {
+				_, err = frontcacheClient.InvalidateWorkerteamCache(ctx, &frontcache.InvalidateWorkerteamCacheRequest{WorkerUuid: req.UserUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache workerteam cache")
+				}
+			}
 		}
 	}
 	return &empty.Empty{}, nil
@@ -217,13 +269,37 @@ func (s *companyServer) CreateWorker(ctx context.Context, req *pb.Worker) (*pb.D
 	go helpers.TrackEventFromMetadata(md, "worker_created")
 
 	if s.use_caching {
-		if _, ok := s.workers_cache[req.TeamUuid]; ok {
+		if ws, ok := s.workers_cache[req.TeamUuid]; ok {
 			s.workers_lock.Lock()
-			delete(s.workers_cache, req.TeamUuid)
+			s.workers_cache[req.TeamUuid].Workers = append(ws.Workers, *e)
+			if !s.use_callback {
+				s.workers_cache[req.TeamUuid].Version = ws.Version + 1
+			}
 			s.workers_lock.Unlock()
 			s.logger.Info("create worker cache is invalidated [teamuuid:" + req.TeamUuid + "]")
+
+			if s.use_callback {
+				frontcacheClient, close, err := frontcache.NewClient()
+				if err != nil {
+					return nil, s.internalError(err, "unable to init frontcache connection")
+				}
+				defer close()
+
+				_, err = frontcacheClient.InvalidateWorkersCache(ctx, &frontcache.InvalidateWorkersCacheRequest{TeamUuid: req.TeamUuid})
+				if err != nil {
+					return nil, s.internalError(err, "error invalidate FrontCache worker list cache")
+				}
+			}
 		}
 	}
 
 	return e, nil
+}
+
+func (s *companyServer) GetWorkersVersion(ctx context.Context, req *pb.GetWorkersVersionRequest) (*pb.WorkersVersion, error) {
+	if res, ok := s.workers_cache[req.Uuid]; ok {
+		return &pb.WorkersVersion{WorkersVer: res.Version}, nil
+	}
+	return &pb.WorkersVersion{WorkersVer: 0}, nil
+	// return nil, fmt.Errorf("GetWorkersVersion not found req uuid")
 }

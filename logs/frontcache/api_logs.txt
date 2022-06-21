@@ -1,0 +1,1 @@
+{"env":"development","level":"debug","msg":"Initialized frontcacheapi environment development","service":"frontcache","time":"2022-06-14T01:22:44-04:00"}

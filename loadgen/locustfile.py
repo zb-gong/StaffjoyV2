@@ -20,8 +20,9 @@ class SharedData(object):
     workers = None
     jobs = None
 
-COMPANY_URL="http://127.0.0.1:50007"
-ACCOUNT_URL="http://127.0.0.1:50006"
+FRONTCACHE_URL = "http://127.0.0.1:50009"
+COMPANY_URL="http://127.0.0.1:50008"
+ACCOUNT_URL="http://127.0.0.1:50007"
 
 class User(FastHttpUser):
     wait_time = between(0.25, 0.5)
@@ -109,7 +110,6 @@ class User(FastHttpUser):
 
     @task
     @tag('update')
-    @tag('task1')
     def update_team(self):
         company_uuid, team, _ = random.choice(SharedData.workers)
         if random.choice([0, 1]) == 0:
@@ -135,7 +135,7 @@ class User(FastHttpUser):
 
     @task
     @tag('read')
-    @tag('r')
+    @tag('rpc')
     def get_directory_list(self):
         company_uuid = random.choice(SharedData.companies)['uuid']
         response = self.client.get(COMPANY_URL + f"/v1/companies/{company_uuid}/directory",
@@ -206,9 +206,7 @@ class User(FastHttpUser):
     #                                   name="delete_admin")
 
     @task
-    @tag('update')
-    @tag('task1')
-    @tag('task3')
+    # @tag('update')
     def delete_worker(self):
         company_uuid, team, workers = random.choice(SharedData.workers)
         user_uuid = random.choice(workers)['user_uuid']
@@ -218,7 +216,6 @@ class User(FastHttpUser):
 
     @task
     @tag('read')
-    @tag('task2')
     @tag('list')
     def list_jobs(self):
         company_uuid, teams = random.choice(SharedData.teams)
@@ -230,7 +227,6 @@ class User(FastHttpUser):
 
     @task
     @tag('update')
-    @tag('task2')
     def update_job(self):
         company_uuid, team, jobs = random.choice(SharedData.jobs)
         job = random.choice(jobs)
@@ -249,7 +245,6 @@ class User(FastHttpUser):
 
     @task
     @tag('update')
-    @tag('task3')
     def update_account(self):
         account = random.choice(SharedData.accounts)
         if random.choice([0, 1]) == 1:
@@ -263,7 +258,6 @@ class User(FastHttpUser):
 
     @task
     @tag('read')
-    @tag('task3')
     @tag('list')
     def list_workers(self):
         company_uuid, team, _ = random.choice(SharedData.workers)

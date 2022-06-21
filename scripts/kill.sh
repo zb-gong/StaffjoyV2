@@ -1,6 +1,6 @@
 #!/bin/bash
 
-services=( "account" "bot" "company" "email" "sms" )
+services=( "account" "bot" "company" "email" "sms" "frontcache")
 
 for service in "${services[@]}"
 do

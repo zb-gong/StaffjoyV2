@@ -14,7 +14,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/csrf v1.7.1
 	github.com/gorilla/mux v1.8.0
-	github.com/grpc-ecosystem/grpc-gateway v1.16.0
+	github.com/grpc-ecosystem/grpc-gateway v1.15.2
 	github.com/mailgun/mailgun-go/v4 v4.6.0
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/sirupsen/logrus v1.8.1
@@ -23,9 +23,8 @@ require (
 	github.com/urfave/negroni v1.0.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
-	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e
-	google.golang.org/grpc v1.45.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/grpc v1.39.0-dev
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/intercom/intercom-go.v2 v2.0.0-20210504094731-2bd1af0ce4b2
 )
 
@@ -33,10 +32,12 @@ require (
 	github.com/certifi/gocertifi v0.0.0-20210429200110-83314bf6d27c // indirect
 	github.com/daaku/go.zipexe v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/ghodss/yaml v1.0.0 // indirect
+	github.com/golang/glog v1.0.0 // indirect
 	github.com/gomodule/redigo v1.8.8 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0 // indirect
@@ -50,6 +51,8 @@ require (
 	github.com/ziutek/mymysql v1.5.4 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/genproto v0.0.0-20210617175327-b9e0b3197ced // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )

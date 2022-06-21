@@ -50,6 +50,7 @@ func main() {
 		s.errorClient = environments.ErrorClient(&config)
 	}
 
+	s.use_callback = (os.Getenv("USE_CALLBACK") == "1")
 	s.use_caching = (os.Getenv("USE_CACHING") == "1")
 	if s.use_caching {
 		s.account_cache = make(map[string]*pb.Account)

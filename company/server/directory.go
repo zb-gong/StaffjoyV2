@@ -90,6 +90,29 @@ func (s *companyServer) CreateDirectory(ctx context.Context, req *pb.NewDirector
 	return d, nil
 }
 
+func (s *companyServer) ListDirectoryRows(ctx context.Context, req *pb.DirectoryListRequest) (*pb.RowsOfDirectory, error) {
+	if req.Limit <= 0 {
+		req.Limit = 20
+	}
+
+	res := &pb.RowsOfDirectory{}
+
+	rows, err := s.db.Query("select internal_id, user_uuid from directory WHERE company_uuid=? limit ? offset ?", req.CompanyUuid, req.Limit, req.Offset)
+	if err != nil {
+		return nil, s.internalError(err, "unable to query database")
+	}
+
+	for rows.Next() {
+		d := pb.DirectoryID{}
+		err := rows.Scan(&d.InternalId, &d.UserUuid)
+		if err != nil {
+			return nil, s.internalError(err, "err scanning database")
+		}
+		res.DirectoryIds = append(res.DirectoryIds, d)
+	}
+	return res, nil
+}
+
 func (s *companyServer) Directory(ctx context.Context, req *pb.DirectoryListRequest) (*pb.DirectoryList, error) {
 	defer helpers.Duration(helpers.Track("Directory"))
 	_, _, err := getAuth(ctx)
@@ -125,16 +148,17 @@ func (s *companyServer) Directory(ctx context.Context, req *pb.DirectoryListRequ
 			return nil, s.internalError(err, "error scanning database")
 		}
 
-		if s.use_caching {
-			if a, ok := s.account_cache[e.UserUuid]; ok {
-				copyAccountToDirectory(a, e)
-				res.Accounts = append(res.Accounts, *e)
-				s.logger.Info("directory account cache hit [account uuid:" + e.UserUuid + "]")
-				continue
-			} else {
-				s.logger.Info("directory account cache miss [account uuid:" + e.UserUuid + "]")
-			}
-		}
+		/* company account cache is not needed */
+		// if s.use_caching {
+		// 	if a, ok := s.account_cache[e.UserUuid]; ok {
+		// 		copyAccountToDirectory(a, e)
+		// 		res.Accounts = append(res.Accounts, *e)
+		// 		s.logger.Info("directory account cache hit [account uuid:" + e.UserUuid + "]")
+		// 		continue
+		// 	} else {
+		// 		s.logger.Info("directory account cache miss [account uuid:" + e.UserUuid + "]")
+		// 	}
+		// }
 
 		md := metadata.New(map[string]string{auth.AuthorizationMetadata: auth.AuthorizationCompanyService})
 		newCtx, cancel := context.WithCancel(metadata.NewOutgoingContext(context.Background(), md))
@@ -151,14 +175,26 @@ func (s *companyServer) Directory(ctx context.Context, req *pb.DirectoryListRequ
 			return nil, s.internalError(err, "error scanning database")
 		}
 
-		if s.use_caching {
-			s.account_lock.Lock()
-			s.account_cache[e.UserUuid] = a
-			s.account_lock.Unlock()
-		}
+		/* company account cache is not needed */
+		// if s.use_caching {
+		// 	s.account_lock.Lock()
+		// 	s.account_cache[e.UserUuid] = a
+		// 	s.account_lock.Unlock()
+		// }
 
 		copyAccountToDirectory(a, e)
 		res.Accounts = append(res.Accounts, *e)
+	}
+	return res, nil
+}
+
+func (s *companyServer) GetDirectoryEntryID(ctx context.Context, req *pb.DirectoryEntryRequest) (*pb.DirectoryEntryID, error) {
+	res := &pb.DirectoryEntryID{}
+	err := s.db.QueryRow("SELECT internal_id from directory WHERE (company_uuid=? AND user_uuid=?) LIMIT 1", req.CompanyUuid, req.UserUuid).Scan(&res.InternalId)
+	if err == sql.ErrNoRows {
+		return nil, grpc.Errorf(codes.NotFound, "directory entry not found for user in this company")
+	} else if err != nil {
+		return nil, s.internalError(err, "failed to query database")
 	}
 	return res, nil
 }
@@ -197,15 +233,16 @@ func (s *companyServer) GetDirectoryEntry(ctx context.Context, req *pb.Directory
 		return nil, s.internalError(err, "failed to query database")
 	}
 
-	if s.use_caching {
-		if a, ok := s.account_cache[e.UserUuid]; ok {
-			copyAccountToDirectory(a, e)
-			s.logger.Info("get directory entry account cache hit [account uuid:" + e.UserUuid + "]")
-			return e, nil
-		} else {
-			s.logger.Info("get directory entry account cache miss [account uuid:" + e.UserUuid + "]")
-		}
-	}
+	/* company account cache is not needed */
+	// if s.use_caching {
+	// 	if a, ok := s.account_cache[e.UserUuid]; ok {
+	// 		copyAccountToDirectory(a, e)
+	// 		s.logger.Info("get directory entry account cache hit [account uuid:" + e.UserUuid + "]")
+	// 		return e, nil
+	// 	} else {
+	// 		s.logger.Info("get directory entry account cache miss [account uuid:" + e.UserUuid + "]")
+	// 	}
+	// }
 
 	newMD := metadata.New(map[string]string{auth.AuthorizationMetadata: auth.AuthorizationCompanyService})
 	newCtx, cancel := context.WithCancel(metadata.NewOutgoingContext(context.Background(), newMD))
@@ -222,11 +259,12 @@ func (s *companyServer) GetDirectoryEntry(ctx context.Context, req *pb.Directory
 		return nil, s.internalError(err, "error fetching account")
 	}
 
-	if s.use_caching {
-		s.account_lock.Lock()
-		s.account_cache[e.UserUuid] = a
-		s.account_lock.Unlock()
-	}
+	/* company account cache is not needed */
+	// if s.use_caching {
+	// 	s.account_lock.Lock()
+	// 	s.account_cache[e.UserUuid] = a
+	// 	s.account_lock.Unlock()
+	// }
 	copyAccountToDirectory(a, e)
 	return e, nil
 }
@@ -353,12 +391,12 @@ func (s *companyServer) GetAssociations(ctx context.Context, req *pb.DirectoryLi
 }
 
 func (s *companyServer) InvalidateCache(ctx context.Context, req *pb.InvalidateCacheRequest) (*empty.Empty, error) {
-	if _, ok := s.account_cache[req.UserUuid]; ok {
-		s.account_lock.Lock()
-		delete(s.account_cache, req.UserUuid)
-		s.account_lock.Unlock()
-		s.logger.Info("Invalidate cache [account uuid:" + req.UserUuid + "]")
-	}
+	// if _, ok := s.account_cache[req.UserUuid]; ok {
+	// 	s.account_lock.Lock()
+	// 	delete(s.account_cache, req.UserUuid)
+	// 	s.account_lock.Unlock()
+	// 	s.logger.Info("Invalidate cache [account uuid:" + req.UserUuid + "]")
+	// }
 
 	rows, err := s.db.Query("select company_uuid from admin where user_uuid=?", req.UserUuid)
 	if err != nil {

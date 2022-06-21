@@ -1,1 +1,1 @@
-{"env":"development","level":"debug","msg":"Initialized companyapi environment development","service":"company","time":"2022-05-18T20:00:06-04:00"}
+{"env":"development","level":"debug","msg":"Initialized companyapi environment development","service":"company","time":"2022-06-14T01:22:44-04:00"}
